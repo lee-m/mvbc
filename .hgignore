@@ -1,0 +1,8 @@
+syntax: glob
+bin/*
+obj/*
+*.suo
+*.docx
+mvbc/SortMessages.bat
+mvbc/SortResx.exe
+*.user
