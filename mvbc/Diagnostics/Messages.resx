@@ -126,7 +126,13 @@
   <data name="2008" xml:space="preserve">
     <value>no input sources specified</value>
   </data>
+  <data name="2009" xml:space="preserve">
+    <value>option '{0}' can be followed only by '+' or '-'</value>
+  </data>
   <data name="2014" xml:space="preserve">
     <value>the value '{0}' is invalid for option '{1}'</value>
+  </data>
+  <data name="2026" xml:space="preserve">
+    <value>warning number '{0}' for the option '{1}' is either not configurable or not valid</value>
   </data>
 </root>

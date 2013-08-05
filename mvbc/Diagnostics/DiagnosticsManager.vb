@@ -55,6 +55,12 @@ Public Class DiagnosticsManager
     Private mQueuedMessages As Queue(Of String)
 
     ''' <summary>
+    ''' Set of all warning numbers.
+    ''' </summary>
+    ''' <remarks></remarks>
+    Private mAllWarnings As HashSet(Of Integer)
+
+    ''' <summary>
     ''' Maximum number of errors that may be reported ina a single run.
     ''' </summary>
     ''' <remarks></remarks>
@@ -70,6 +76,8 @@ Public Class DiagnosticsManager
         mResourceManager = New ResourceManager("mvbc.Messages", Me.GetType().Assembly)
         mQueueMessageOutput = 0
         mQueuedMessages = New Queue(Of String)
+        mAllWarnings = New HashSet(Of Integer)(New Integer() {42004, 42016, 42017, 42018, 42019, 42020, 42021, 42022, 42024, 42025,
+                                                              42026, 42028, 42029, 42030, 42031, 42104, 42105, 42110, 42324})
     End Sub
 
     ''' <summary>
@@ -106,12 +114,34 @@ Public Class DiagnosticsManager
     ''' Dicards any queued messages.
     ''' </summary>
     ''' <remarks></remarks>
-    Private Sub DiscardQueuedMessages()
+    Public Sub DiscardQueuedMessages()
 
         mQueueMessageOutput = 0
         mQueuedMessages.Clear()
 
     End Sub
+
+    ''' <summary>
+    ''' Treats all warnings as errors.
+    ''' </summary>
+    ''' <remarks></remarks>
+    Public Sub TreatAllWarningsAsErrors()
+
+        For Each warningID In mAllWarnings
+            WarningsAsErrors.Add(warningID)
+        Next
+
+    End Sub
+
+    ''' <summary>
+    ''' Determines whether a particular warning ID is valid or not.
+    ''' </summary>
+    ''' <param name="warningID">Warning ID to check.</param>
+    ''' <returns>True if the warning ID is valid, otherwise false.</returns>
+    ''' <remarks></remarks>
+    Public Function IsValidWarningID(warningID As Integer) As Boolean
+        Return mAllWarnings.Contains(warningID)
+    End Function
 
     ''' <summary>
     ''' Outputs a command line error.
@@ -199,6 +229,18 @@ Public Class DiagnosticsManager
             Return mNumWarningsIssued
         End Get
     End Property
+
+    ''' <summary>
+    ''' Set of warnings which should be output as errors
+    ''' </summary>
+    ''' <remarks></remarks>
+    Public WarningsAsErrors As New HashSet(Of Integer)
+
+    ''' <summary>
+    ''' Those warnings which are disabled.
+    ''' </summary>
+    ''' <remarks></remarks>
+    Public DisabledWarnings As HashSet(Of Boolean)
 
 #End Region
 

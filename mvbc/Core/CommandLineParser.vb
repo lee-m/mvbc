@@ -204,8 +204,16 @@ Public Class CommandLineParser
             Case "debug+"
                 settings.DebugInfoGenerationEnabled = True
 
+                If Not String.IsNullOrEmpty(argValue) Then
+                    mDiagnosticsMngr.CommandLineError(2009, "debug")
+                End If
+
             Case "debug-"
                 settings.DebugInfoGenerationEnabled = False
+
+                If Not String.IsNullOrEmpty(argValue) Then
+                    mDiagnosticsMngr.CommandLineError(2009, "debug")
+                End If
 
             Case "debug"
 
@@ -305,8 +313,16 @@ Public Class CommandLineParser
             Case "optionstrict+"
                 settings.OptionStrict = OptionStrictViolationValue.IssueError
 
+                If Not String.IsNullOrEmpty(argValue) Then
+                    mDiagnosticsMngr.CommandLineError(2009, "optionstrict")
+                End If
+
             Case "optionstrict-"
                 settings.OptionStrict = OptionStrictViolationValue.Ignore
+
+                If Not String.IsNullOrEmpty(argValue) Then
+                    mDiagnosticsMngr.CommandLineError(2009, "optionstrict")
+                End If
 
             Case "out"
 
@@ -354,6 +370,47 @@ Public Class CommandLineParser
 
             Case "verbose"
                 settings.Verbose = True
+
+            Case "warnaserror", "warnaserror+", "warnaserror-"
+
+                '/warnaserror+: or /warnaserror-: doesn't do anything
+                If colonPosition > 0 Then
+
+                    If Not String.IsNullOrEmpty(argValue) Then
+
+                        Dim warningIDs = argValue.Split(New String() {","}, StringSplitOptions.RemoveEmptyEntries)
+
+                        For Each warningID In warningIDs
+
+                            Dim parsedWarningID As Integer = 0
+
+                            If Not Integer.TryParse(warningID, parsedWarningID) Then
+                                mDiagnosticsMngr.CommandLineError(2014, warningID, "warnaserror")
+                            ElseIf Not mDiagnosticsMngr.IsValidWarningID(parsedWarningID) Then
+                                mDiagnosticsMngr.CommandLineWarning(2026, warningID, "warnaserror")
+                            Else
+
+                                If argName.EndsWith("-") Then
+                                    mDiagnosticsMngr.WarningsAsErrors.Remove(parsedWarningID)
+                                Else
+                                    mDiagnosticsMngr.WarningsAsErrors.Add(parsedWarningID)
+                                End If
+
+                            End If
+
+                        Next
+
+                    End If
+
+                Else
+
+                    If argName.EndsWith("-") Then
+                        mDiagnosticsMngr.WarningsAsErrors.Clear()
+                    Else
+                        mDiagnosticsMngr.TreatAllWarningsAsErrors()
+                    End If
+
+                End If
 
             Case Else
                 mDiagnosticsMngr.CommandLineWarning(2007, argName)
