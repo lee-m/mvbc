@@ -144,6 +144,36 @@ Public Class DiagnosticsManager
     End Function
 
     ''' <summary>
+    ''' Outputs an internal compiler error.
+    ''' </summary>
+    ''' <param name="ex">Unhandled exception.</param>
+    ''' <remarks></remarks>
+    Public Sub InternalCompilerError(ex As Exception)
+
+        Dim trace As String = Environment.StackTrace
+
+        'We want ICEs to be reported right away
+        DisableMessageQueuing()
+
+        mNumErrorsIssued += 1
+        EmitMessage(String.Format("Internal compiler error : {0}", ex.Message))
+
+    End Sub
+
+    ''' <summary>
+    ''' Outputs a fatal error.
+    ''' </summary>
+    ''' <param name="number">Error number.</param>
+    ''' <param name="args">Any string format arguments to include in the message.</param>
+    ''' <remarks></remarks>
+    Public Sub FatalError(number As Integer, ParamArray args() As String)
+
+        mNumErrorsIssued += 1
+        EmitMessage(String.Format("Fatal error BC{0} : {1}", number.ToString(), GetMessageText(number, args)))
+
+    End Sub
+
+    ''' <summary>
     ''' Outputs a command line error.
     ''' </summary>
     ''' <param name="number">Number of the error.</param>
@@ -152,7 +182,7 @@ Public Class DiagnosticsManager
     Public Sub CommandLineError(number As Integer, ParamArray args() As String)
 
         mNumErrorsIssued += 1
-        EmitMessage(String.Format("mvbc : Command line error BC{0} : {1}", number.ToString(), GetMessageText(number, args)))
+        EmitMessage(String.Format("Command line error BC{0} : {1}", number.ToString(), GetMessageText(number, args)))
 
     End Sub
 
@@ -165,7 +195,7 @@ Public Class DiagnosticsManager
     Public Sub CommandLineWarning(number As Integer, ParamArray args() As String)
 
         mNumWarningsIssued += 1
-        EmitMessage(String.Format("mvbc : Command line warning BC{0} : {1}", number.ToString(), GetMessageText(number, args)))
+        EmitMessage(String.Format("Command line warning BC{0} : {1}", number.ToString(), GetMessageText(number, args)))
 
     End Sub
 
@@ -181,7 +211,7 @@ Public Class DiagnosticsManager
     Private Sub EmitMessage(message As String)
 
         If mQueueMessageOutput = 0 Then
-            Console.WriteLine(message)
+            Console.WriteLine("mvbc : " & message)
         Else
             mQueuedMessages.Enqueue(message)
         End If

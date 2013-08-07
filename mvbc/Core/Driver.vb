@@ -60,30 +60,39 @@ Public Class Driver
     ''' <remarks></remarks>
     Public Function Compile(commandLineArgs As String()) As Integer
 
-        'Suppress any command line errors until after the options have been parsed
-        mDiagnosticsManager.EnableMessageQueuing()
+        Try
 
-        Dim cmdLine As New CommandLineParser(mDiagnosticsManager)
-        Dim settings = cmdLine.Parse(commandLineArgs)
+            'Suppress any command line errors until after the options have been parsed
+            mDiagnosticsManager.EnableMessageQueuing()
 
-        If settings Is Nothing Then
-            Return 1
-        End If
+            Dim cmdLine As New CommandLineParser(mDiagnosticsManager)
+            Dim settings = cmdLine.Parse(commandLineArgs)
 
-        If settings.ShowHelp Then
-            ShowUsage()
+            If settings Is Nothing Then
+                Return 1
+            End If
+
+            If settings.ShowHelp Then
+                ShowUsage()
+                Return 0
+            End If
+
+            'If we're not showing the help text, emit any errors/warnings found whilst parsing
+            'the command line options
+            mDiagnosticsManager.EmitQueuedMessages()
+
+            If mDiagnosticsManager.NumberOfErrors > 0 Then
+                Return 1
+            End If
+
             Return 0
-        End If
 
-        'If we're not showing the help text, emit any errors/warnings found whilst parsing
-        'the command line options
-        mDiagnosticsManager.EmitQueuedMessages()
+        Catch ex As Exception
 
-        If mDiagnosticsManager.NumberOfErrors > 0 Then
+            mDiagnosticsManager.InternalCompilerError(ex)
             Return 1
-        End If
 
-        Return 0
+        End Try
 
     End Function
 
@@ -158,8 +167,6 @@ Public Class Driver
         usageText.AppendLine("/bugreport:<file>                 Create bug report file.")
         usageText.AppendLine("/codepage:<number>                Specifies the codepage to use when opening source files.")
         usageText.AppendLine("/delaysign[+|-]                   Delay-sign the assembly using only the public portion of the strong name key.")
-        usageText.AppendLine("/errorreport:<string>             Specifies how to handle internal compiler errors; must be prompt, send, none, or queue (default).")
-        usageText.AppendLine("/filealign:<number>               Specify the alignment used for output file sections.")
         usageText.AppendLine("/keycontainer:<string>            Specifies a strong name key container.")
         usageText.AppendLine("/keyfile:<file>                   Specifies a strong name key file.")
         usageText.AppendLine("/libpath:<path_list>              List of directories to search for metadata references. (Semi-colon delimited.)")
@@ -168,7 +175,6 @@ Public Class Driver
         usageText.AppendLine("/nostdlib                         Do not reference standard libraries (system.dll and VBC.RSP file).")
         usageText.AppendLine("/platform:<string>                Limit which platforms this code can run on; must be x86, x64, Itanium, arm, AnyCPU32BitPreferred or anycpu (default).")
         usageText.AppendLine("/sdkpath:<path>                   Location of the .NET Framework SDK directory (mscorlib.dll).")
-        usageText.AppendLine("/utf8output[+|-]                  Emit compiler output in UTF8 character encoding.")
         usageText.AppendLine("@<file>                           Insert command-line settings from a text file.")
         usageText.AppendLine("/vbruntime[+|-|*]                 Compile with/without the default Visual Basic runtime.")
         usageText.AppendLine("/vbruntime:<file>                 Compile with the alternate Visual Basic runtime in <file>.")

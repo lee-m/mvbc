@@ -151,6 +151,7 @@ Public Class CommandLineParser
     Public Function Parse(args() As String) As CompilerSettings
 
         Dim settings As New CompilerSettings
+        Dim processedResponseFiles As New HashSet(Of String)
 
         For Each argument In args
 
@@ -160,6 +161,24 @@ Public Class CommandLineParser
             If argument.StartsWith("/") _
                OrElse argument.StartsWith("-") Then
                 optParseResult = ParseOption(argument.TrimStart(New Char() {"/"c, "-"c}), settings)
+            ElseIf argument.StartsWith("@") Then
+
+                Dim absPath = New FileInfo(argument.TrimStart("@"c)).FullName
+
+                If Not File.Exists(absPath) Then
+                    mDiagnosticsMngr.FatalError(2011, absPath)
+                ElseIf processedResponseFiles.Contains(absPath) Then
+                    mDiagnosticsMngr.CommandLineError(2003, absPath)
+                Else
+
+                    processedResponseFiles.Add(absPath)
+
+                    Using reader As New StreamReader(absPath)
+                        ParseResponseFile(reader, settings)
+                    End Using
+
+                End If
+
             Else
                 settings.InputFiles.Add(New SourceFile(argument))
             End If
@@ -170,6 +189,16 @@ Public Class CommandLineParser
 
         Next
 
+        'Process the standard VBC.rsp file unless /noconfig was specified
+        If Not settings.NoConfig Then
+
+            'TODO: uncomment once the rest of the command line parsing is in place
+            'Using reader As New StreamReader("mvbc.rsp")
+            '    ParseResponseFile(reader, settings)
+            'End Using
+
+        End If
+
         Return settings
 
     End Function
@@ -177,6 +206,38 @@ Public Class CommandLineParser
 #End Region
 
 #Region "Private Methods"
+
+    ''' <summary>
+    ''' Parses a set of options from the specified response file
+    ''' </summary>
+    ''' <param name="fileName"></param>
+    ''' <remarks></remarks>
+    Private Sub ParseResponseFile(responseFileReader As TextReader, settings As CompilerSettings)
+
+        Dim optionLine As String
+
+        While True
+
+            optionLine = responseFileReader.ReadLine()
+
+            If String.IsNullOrEmpty(optionLine) Then
+                Exit Sub
+            End If
+
+            'Lines starting with a # are comments
+            If optionLine.StartsWith("#") Then
+                Continue While
+            End If
+
+            Dim result = ParseOption(optionLine, settings)
+
+            If result = ParseOptionResult.Stop Then
+                Exit Sub
+            End If
+
+        End While
+
+    End Sub
 
     ''' <summary>
     ''' Parses a single command line option and updates the compiler settings to reflect the value of that option.
@@ -200,6 +261,14 @@ Public Class CommandLineParser
         End If
 
         Select Case argName
+
+            Case "bugreport"
+
+                If String.IsNullOrEmpty(argValue) Then
+                    mDiagnosticsMngr.CommandLineError(2006, "bugreport", ":<file>")
+                Else
+                    settings.BugReportFile = argValue
+                End If
 
             Case "debug+"
                 settings.DebugInfoGenerationEnabled = True
@@ -367,6 +436,20 @@ Public Class CommandLineParser
                     End If
 
                 End If
+
+            Case "vbruntime-", "vbruntime+"
+
+                If colonPosition > 0 Then
+                    mDiagnosticsMngr.CommandLineError(2009, "vbruntime")
+                ElseIf argName.EndsWith("+") Then
+                    settings.VBRuntime = VBRuntimeValues.WithVBRuntime
+                ElseIf argName.EndsWith("-") Then
+                    settings.VBRuntime = VBRuntimeValues.WithoutVBRuntime
+                End If
+
+            Case "vbruntime"
+                settings.VBRuntime = VBRuntimeValues.WithVBRuntime
+                settings.VBRuntimeFileName = argValue
 
             Case "verbose"
                 settings.Verbose = True

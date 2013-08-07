@@ -39,13 +39,6 @@ Public Enum OptionCompareValues
     Binary
 End Enum
 
-Public Enum InternalCompilerErrorReportValues
-    Prompt
-    Send
-    None
-    Queue
-End Enum
-
 Public Enum PlatformValues
     x86
     x64

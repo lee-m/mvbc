@@ -38,7 +38,6 @@ Public Class CompilerSettings
         OptionExplicit = False
         OptionInfer = False
         OptionStrict = OptionStrictViolationValue.Ignore
-        ICEReporting = InternalCompilerErrorReportValues.Queue
         Platform = PlatformValues.AnyCPU
 
         AddModuleList = New HashSet(Of String)()
@@ -276,12 +275,6 @@ Public Class CompilerSettings
     ''' </summary>
     ''' <remarks></remarks>
     Public DelaySign As Boolean
-
-    ''' <summary>
-    ''' Specifies how to handle internal compiler errors
-    ''' </summary>
-    ''' <remarks></remarks>
-    Public ICEReporting As InternalCompilerErrorReportValues
 
     ''' <summary>
     ''' The alignment used for output file sections.
