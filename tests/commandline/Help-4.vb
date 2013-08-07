@@ -52,8 +52,6 @@
 '#compiler-message:/bugreport:<file>                 Create bug report file.
 '#compiler-message:/codepage:<number>                Specifies the codepage to use when opening source files.
 '#compiler-message:/delaysign[+|-]                   Delay-sign the assembly using only the public portion of the strong name key.
-'#compiler-message:/errorreport:<string>             Specifies how to handle internal compiler errors; must be prompt, send, none, or queue (default).
-'#compiler-message:/filealign:<number>               Specify the alignment used for output file sections.
 '#compiler-message:/keycontainer:<string>            Specifies a strong name key container.
 '#compiler-message:/keyfile:<file>                   Specifies a strong name key file.
 '#compiler-message:/libpath:<path_list>              List of directories to search for metadata references. (Semi-colon delimited.)
@@ -62,7 +60,6 @@
 '#compiler-message:/nostdlib                         Do not reference standard libraries (system.dll and VBC.RSP file).
 '#compiler-message:/platform:<string>                Limit which platforms this code can run on; must be x86, x64, Itanium, arm, AnyCPU32BitPreferred or anycpu (default).
 '#compiler-message:/sdkpath:<path>                   Location of the .NET Framework SDK directory (mscorlib.dll).
-'#compiler-message:/utf8output[+|-]                  Emit compiler output in UTF8 character encoding.
 '#compiler-message:@<file>                           Insert command-line settings from a text file.
 '#compiler-message:/vbruntime[+|-|*]                 Compile with/without the default Visual Basic runtime.
 '#compiler-message:/vbruntime:<file>                 Compile with the alternate Visual Basic runtime in <file>.
