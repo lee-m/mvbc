@@ -277,12 +277,6 @@ Public Class CompilerSettings
     Public DelaySign As Boolean
 
     ''' <summary>
-    ''' The alignment used for output file sections.
-    ''' </summary>
-    ''' <remarks></remarks>
-    Public FileAlign As Integer
-
-    ''' <summary>
     ''' The strong key name container to use when signing the assembly.
     ''' </summary>
     ''' <remarks></remarks>
@@ -329,12 +323,6 @@ Public Class CompilerSettings
     ''' </summary>
     ''' <remarks></remarks>
     Public SDKPath As String
-
-    ''' <summary>
-    ''' Emit compiler output in UTF8 character encoding.
-    ''' </summary>
-    ''' <remarks></remarks>
-    Public UTF8Output As Boolean
 
     ''' <summary>
     ''' Compile with/without the default Visual Basic runtime.
