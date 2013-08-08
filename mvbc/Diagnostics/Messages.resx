@@ -105,14 +105,14 @@
       </xsd:complexType>
     </xsd:element>
   </xsd:schema>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
   <resheader name="resmimetype">
     <value>text/microsoft-resx</value>
   </resheader>
   <resheader name="version">
     <value>2.0</value>
-  </resheader>
-  <resheader name="reader">
-    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
   <resheader name="writer">
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
@@ -137,6 +137,9 @@
   </data>
   <data name="2014" xml:space="preserve">
     <value>the value '{0}' is invalid for option '{1}'</value>
+  </data>
+  <data name="2016" xml:space="preserve">
+    <value>code page '{0}' is invalid or not installed</value>
   </data>
   <data name="2026" xml:space="preserve">
     <value>warning number '{0}' for the option '{1}' is either not configurable or not valid</value>

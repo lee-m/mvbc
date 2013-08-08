@@ -38,7 +38,6 @@ Public Class CompilerSettings
         OptionExplicit = False
         OptionInfer = False
         OptionStrict = OptionStrictViolationValue.Ignore
-        Platform = PlatformValues.AnyCPU
 
         AddModuleList = New HashSet(Of String)()
         InteropAssemblies = New HashSet(Of String)
@@ -46,8 +45,6 @@ Public Class CompilerSettings
         InputFiles = New List(Of SourceFile)
         LinkResources = New HashSet(Of String)
         ResourceFiles = New HashSet(Of String)
-        DisabledWarnings = New HashSet(Of Integer)
-        WarningsAsErrorsList = New Dictionary(Of Integer, Boolean)
         Defines = New List(Of KeyValuePair(Of String, String))
         GlobalImports = New HashSet(Of String)
         LibraryPaths = New HashSet(Of String)
@@ -163,30 +160,6 @@ Public Class CompilerSettings
     Public DebugInfoGenerationEnabled As Boolean
 
     ''' <summary>
-    ''' Whether to disable all warnings.
-    ''' </summary>
-    ''' <remarks></remarks>
-    Public DisableWarnings As Boolean
-
-    ''' <summary>
-    ''' Set of warning numbers to disable.
-    ''' </summary>
-    ''' <remarks></remarks>
-    Public DisabledWarnings As HashSet(Of Integer)
-
-    ''' <summary>
-    ''' Whether warnings should be treated as errors.
-    ''' </summary>
-    ''' <remarks></remarks>
-    Public WarningsAsErrors As Boolean
-
-    ''' <summary>
-    ''' The set of warnings to treat as errors.
-    ''' </summary>
-    ''' <remarks></remarks>
-    Public WarningsAsErrorsList As Dictionary(Of Integer, Boolean)
-
-    ''' <summary>
     ''' Conditional compilation symbols.
     ''' </summary>
     ''' <remarks></remarks>
@@ -253,12 +226,6 @@ Public Class CompilerSettings
     Public Verbose As Boolean
 
     ''' <summary>
-    ''' The base address for a library or module (hex).
-    ''' </summary>
-    ''' <remarks></remarks>
-    Public BaseAddress As Integer
-
-    ''' <summary>
     ''' Name of the bug report file to create.
     ''' </summary>
     ''' <remarks></remarks>
@@ -268,7 +235,7 @@ Public Class CompilerSettings
     ''' The codepage to use when opening source files.
     ''' </summary>
     ''' <remarks></remarks>
-    Public CodePage As Integer
+    Public CodePage As Integer?
 
     ''' <summary>
     ''' Delay-sign the assembly using only the public portion of the strong name key.
@@ -311,12 +278,6 @@ Public Class CompilerSettings
     ''' </summary>
     ''' <remarks></remarks>
     Public NoStandardLibraries As Boolean
-
-    ''' <summary>
-    ''' The platforms this code can run on
-    ''' </summary>
-    ''' <remarks></remarks>
-    Public Platform As PlatformValues
 
     ''' <summary>
     ''' Location of the .NET Framework SDK directory
