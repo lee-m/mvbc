@@ -112,14 +112,6 @@ class regression_test:
             proc = subprocess.Popen([os.path.abspath(COMPILER_EXE_LOCATION)] + self.compiler_options, stdout = stdOutHandle, stderr = stdErrHandle);
             exitCode = proc.wait();
 
-            #Check the exit code matches what we expect
-            if exitCode != self.expected_exit_code:
-
-                stdOutHandle.close();
-                stdErrHandle.close();
-
-                return test_result(self.file_name, False, "Expected exit code %d, got %d" % (self.expected_exit_code, exitCode));
-
             stdOutHandle.seek(0, 0);
             stdErrHandle.seek(0, 0);
 
@@ -133,9 +125,28 @@ class regression_test:
             stdOutHandle.close();
             stdErrHandle.close();
 
+            #Check for ICE messages first, one of these may result in different exit codes or a different number of messages
+            #to be output
+            iceMessageFound = False;
+
+            for message in receivedMessages:
+
+                if "Internal compiler error" in message:
+                    iceMessageFound = True;
+                    break;
+
+            if iceMessageFound:
+                return test_result(self.file_name, False, "Internal compiler error");
+
+            #Check the exit code matches what we expect
+            if exitCode != self.expected_exit_code:
+                return test_result(self.file_name, False, "Expected exit code %d, got %d" % (self.expected_exit_code, exitCode));
+
+            #Check we got the expected number of messages
             if len(receivedMessages) != len(self.compiler_messages):
                 return test_result(self.file_name, False, "Expected %d messages, got %d" % (len(self.compiler_messages), len(receivedMessages)));
         
+            #Check that the messages are the same
             if not receivedMessages.issubset(set(self.compiler_messages)):
                 return test_result(self.file_name, False, "Message contents differ");
          
