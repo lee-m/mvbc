@@ -48,7 +48,6 @@
 '#compiler-message:/quiet                            Quiet output mode.
 '#compiler-message:/verbose                          Display verbose messages.
 '#compiler-message:                                  - ADVANCED -
-'#compiler-message:/baseaddress:<number>             The base address for a library or module (hex).
 '#compiler-message:/bugreport:<file>                 Create bug report file.
 '#compiler-message:/codepage:<number>                Specifies the codepage to use when opening source files.
 '#compiler-message:/delaysign[+|-]                   Delay-sign the assembly using only the public portion of the strong name key.
@@ -58,7 +57,6 @@
 '#compiler-message:/main:<class>                     Specifies the Class or Module that contains Sub Main. It can also be a Class that inherits from System.Windows.Forms.Form. (Short form: /m)
 '#compiler-message:/netcf                            Target the .NET Compact Framework.
 '#compiler-message:/nostdlib                         Do not reference standard libraries (system.dll and VBC.RSP file).
-'#compiler-message:/platform:<string>                Limit which platforms this code can run on; must be x86, x64, Itanium, arm, AnyCPU32BitPreferred or anycpu (default).
 '#compiler-message:/sdkpath:<path>                   Location of the .NET Framework SDK directory (mscorlib.dll).
 '#compiler-message:@<file>                           Insert command-line settings from a text file.
 '#compiler-message:/vbruntime[+|-|*]                 Compile with/without the default Visual Basic runtime.

@@ -39,15 +39,6 @@ Public Enum OptionCompareValues
     Binary
 End Enum
 
-Public Enum PlatformValues
-    x86
-    x64
-    Itanium
-    ARM
-    AnyCPU32BitPreferred
-    AnyCPU
-End Enum
-
 Public Enum VBRuntimeValues
     WithVBRuntime
     WithoutVBRuntime

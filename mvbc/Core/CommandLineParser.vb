@@ -270,6 +270,26 @@ Public Class CommandLineParser
                     settings.BugReportFile = argValue
                 End If
 
+            Case "codepage"
+
+                If String.IsNullOrEmpty(argValue) Then
+                    mDiagnosticsMngr.CommandLineError(2006, "codepage", ":<number>")
+                Else
+
+                    Try
+
+                        Dim codePageID As Integer = Integer.Parse(argValue)
+                        Dim encoding As Encoding = encoding.GetEncoding(codePageID)
+
+                        'Code page ID is valid
+                        settings.CodePage = codePageID
+
+                    Catch ex As Exception
+                        mDiagnosticsMngr.CommandLineError(2016, argValue)
+                    End Try
+
+                End If
+
             Case "debug+"
                 settings.DebugInfoGenerationEnabled = True
 
@@ -314,6 +334,9 @@ Public Class CommandLineParser
                 settings.ShowHelp = True
                 Return ParseOptionResult.Stop
 
+            Case "netcf"
+                settings.TargetCompactFramework = True
+
             Case "noconfig"
                 settings.NoConfig = True
 
@@ -324,7 +347,15 @@ Public Class CommandLineParser
                 settings.NoStandardLibraries = True
 
             Case "nowarn"
-                settings.DisableWarnings = True
+
+                If String.IsNullOrEmpty(argValue) Then
+                    mDiagnosticsMngr.SuppressAllWarnings()
+                Else
+
+                    Dim parsedWarnings As HashSet(Of Integer) = ParseWarningList(argValue, argName)
+                    mDiagnosticsMngr.DisabledWarnings.UnionWith(parsedWarnings)
+
+                End If
 
             Case "nowin32manifest"
                 settings.NoWin32Manifest = True
@@ -461,27 +492,13 @@ Public Class CommandLineParser
 
                     If Not String.IsNullOrEmpty(argValue) Then
 
-                        Dim warningIDs = argValue.Split(New String() {","}, StringSplitOptions.RemoveEmptyEntries)
+                        Dim parsedWarnings As HashSet(Of Integer) = ParseWarningList(argValue, "warnaserror")
 
-                        For Each warningID In warningIDs
-
-                            Dim parsedWarningID As Integer = 0
-
-                            If Not Integer.TryParse(warningID, parsedWarningID) Then
-                                mDiagnosticsMngr.CommandLineError(2014, warningID, "warnaserror")
-                            ElseIf Not mDiagnosticsMngr.IsValidWarningID(parsedWarningID) Then
-                                mDiagnosticsMngr.CommandLineWarning(2026, warningID, "warnaserror")
-                            Else
-
-                                If argName.EndsWith("-") Then
-                                    mDiagnosticsMngr.WarningsAsErrors.Remove(parsedWarningID)
-                                Else
-                                    mDiagnosticsMngr.WarningsAsErrors.Add(parsedWarningID)
-                                End If
-
-                            End If
-
-                        Next
+                        If argName.EndsWith("-") Then
+                            mDiagnosticsMngr.WarningsAsErrors.ExceptWith(parsedWarnings)
+                        Else
+                            mDiagnosticsMngr.WarningsAsErrors.UnionWith(parsedWarnings)
+                        End If
 
                     End If
 
@@ -501,6 +518,36 @@ Public Class CommandLineParser
         End Select
 
         Return ParseOptionResult.Continue
+
+    End Function
+
+    ''' <summary>
+    ''' Parses a set of warning numbers from a command line option's value.
+    ''' </summary>
+    ''' <param name="argValue">Option value containing the comma separated list of warning numbers.</param>
+    ''' <param name="optionName">The name of the option the warning IDs belong to.</param>
+    ''' <returns>A set of parsed warning IDs.</returns>
+    ''' <remarks></remarks>
+    Private Function ParseWarningList(argValue As String, optionName As String) As HashSet(Of Integer)
+
+        Dim warningIDs = argValue.Split(New String() {","}, StringSplitOptions.RemoveEmptyEntries)
+        Dim parsedWarnings As New HashSet(Of Integer)
+
+        For Each warningID In warningIDs
+
+            Dim parsedWarningID As Integer = 0
+
+            If Not Integer.TryParse(warningID, parsedWarningID) Then
+                mDiagnosticsMngr.CommandLineError(2014, warningID, optionName)
+            ElseIf Not mDiagnosticsMngr.IsValidWarningID(parsedWarningID) Then
+                mDiagnosticsMngr.CommandLineWarning(2026, warningID, optionName)
+            Else
+                parsedWarnings.Add(parsedWarningID)
+            End If
+
+        Next
+
+        Return parsedWarnings
 
     End Function
 

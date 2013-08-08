@@ -134,6 +134,18 @@ Public Class DiagnosticsManager
     End Sub
 
     ''' <summary>
+    ''' Suppresses emission of all warnings
+    ''' </summary>
+    ''' <remarks></remarks>
+    Public Sub SuppressAllWarnings()
+
+        For Each warningID In mAllWarnings
+            DisabledWarnings.Add(warningID)
+        Next
+
+    End Sub
+
+    ''' <summary>
     ''' Determines whether a particular warning ID is valid or not.
     ''' </summary>
     ''' <param name="warningID">Warning ID to check.</param>
@@ -149,8 +161,6 @@ Public Class DiagnosticsManager
     ''' <param name="ex">Unhandled exception.</param>
     ''' <remarks></remarks>
     Public Sub InternalCompilerError(ex As Exception)
-
-        Dim trace As String = Environment.StackTrace
 
         'We want ICEs to be reported right away
         DisableMessageQueuing()
@@ -270,7 +280,7 @@ Public Class DiagnosticsManager
     ''' Those warnings which are disabled.
     ''' </summary>
     ''' <remarks></remarks>
-    Public DisabledWarnings As HashSet(Of Boolean)
+    Public DisabledWarnings As New HashSet(Of Integer)
 
 #End Region
 
