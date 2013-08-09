@@ -361,6 +361,14 @@ Public Class CommandLineParser
 
                 End If
 
+            Case "main"
+
+                If String.IsNullOrEmpty(argValue) Then
+                    mDiagnosticsMngr.CommandLineError(2006, "main", ":<class>")
+                Else
+                    settings.MainClassName = argValue
+                End If
+
             Case "netcf"
                 settings.TargetCompactFramework = True
 
