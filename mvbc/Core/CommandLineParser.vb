@@ -199,6 +199,9 @@ Public Class CommandLineParser
 
         End If
 
+        'Make sure that any referenced file can be found
+        ValidateReferencedFiles(settings.ReferencedFiles, settings.LibraryPaths)
+
         Return settings
 
     End Function
@@ -206,6 +209,50 @@ Public Class CommandLineParser
 #End Region
 
 #Region "Private Methods"
+
+    ''' <summary>
+    ''' Ensures that any referenced file can be found.
+    ''' </summary>
+    ''' <param name="referencedFiles">The set of referenced files specified on the command line.</param>
+    ''' <param name="libraryPaths">Library search paths to process when trying to find a referenced file.</param>
+    ''' <remarks></remarks>
+    Private Sub ValidateReferencedFiles(referencedFiles As HashSet(Of String),
+                                        libraryPaths As IEnumerable(Of String))
+
+        'TODO: Attempting to load the same assembly via two different files should be rejected
+        Dim searchPaths As New List(Of String)
+        searchPaths.Add(Environment.CurrentDirectory)
+        searchPaths.AddRange(libraryPaths)
+
+        For Each referencedFile In referencedFiles
+
+            Dim foundFile As Boolean = False
+
+            'If we have an absolute path, use that. Otherwise make a pass through each library path and try and find
+            'the file in there
+            If Path.IsPathRooted(referencedFile) Then
+                foundFile = File.Exists(referencedFile)
+            Else
+
+                For Each searchPath In searchPaths
+
+                    If File.Exists(Path.Combine(searchPath, referencedFile)) Then
+                        foundFile = True
+                        Exit For
+                    End If
+
+                Next
+
+            End If
+
+            If Not foundFile Then
+                mDiagnosticsMngr.CommandLineError(2017, Path.GetFileName(referencedFile))
+                Exit Sub
+            End If
+
+        Next
+
+    End Sub
 
     ''' <summary>
     ''' Parses a set of options from the specified response file
@@ -465,6 +512,19 @@ Public Class CommandLineParser
                     mDiagnosticsMngr.CommandLineError(2006, "out", ":<file>")
                 Else
                     settings.OutputFile = argValue
+                End If
+
+            Case "reference", "r"
+
+                If String.IsNullOrEmpty(argValue) Then
+                    mDiagnosticsMngr.CommandLineError(2006, argName, ":<file_list>")
+                Else
+
+                    'Any referenced file's validity is checked after all the options are parsed so that we can take into 
+                    'account any /libpath options
+                    Dim referencedFiles As String() = argValue.Split(","c)
+                    settings.ReferencedFiles.UnionWith(referencedFiles)
+                    
                 End If
 
             Case "quiet"
