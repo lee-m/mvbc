@@ -334,6 +334,33 @@ Public Class CommandLineParser
                 settings.ShowHelp = True
                 Return ParseOptionResult.Stop
 
+            Case "libpath"
+
+                If String.IsNullOrEmpty(argValue) Then
+                    mDiagnosticsMngr.CommandLineError(2006, "libpath", ":<path_list>")
+                Else
+
+                    Dim paths As String() = argValue.Split(";"c)
+
+                    For Each libPath In paths
+
+                        Try
+
+                            'VBC doesn't warn/error for invalid paths but check that the path exists before adding it to the list
+                            If Directory.Exists(New DirectoryInfo(libPath).FullName) Then
+                                settings.LibraryPaths.Add(libPath)
+                            End If
+
+                        Catch argEx As ArgumentException
+                        Catch pathEx As PathTooLongException
+                            'Ignore - we may get here if the user does something silly like /libpath:? 
+                            'or /libpath:<path longer than 255 chars>
+                        End Try
+
+                    Next
+
+                End If
+
             Case "netcf"
                 settings.TargetCompactFramework = True
 
