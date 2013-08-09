@@ -47,7 +47,7 @@ Public Class CompilerSettings
         ResourceFiles = New HashSet(Of String)
         Defines = New List(Of KeyValuePair(Of String, String))
         GlobalImports = New HashSet(Of String)
-        LibraryPaths = New HashSet(Of String)
+        LibraryPaths = New List(Of String)
 
     End Sub
 
@@ -259,7 +259,7 @@ Public Class CompilerSettings
     ''' List of directories to search for metadata references.
     ''' </summary>
     ''' <remarks></remarks>
-    Public LibraryPaths As HashSet(Of String)
+    Public LibraryPaths As IList(Of String)
 
     ''' <summary>
     ''' The Class or Module that contains Sub Main

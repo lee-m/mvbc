@@ -141,6 +141,9 @@
   <data name="2016" xml:space="preserve">
     <value>code page '{0}' is invalid or not installed</value>
   </data>
+  <data name="2017" xml:space="preserve">
+    <value>could not find library '{0}'</value>
+  </data>
   <data name="2026" xml:space="preserve">
     <value>warning number '{0}' for the option '{1}' is either not configurable or not valid</value>
   </data>
