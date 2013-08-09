@@ -76,8 +76,10 @@ Public Class DiagnosticsManager
         mResourceManager = New ResourceManager("mvbc.Messages", Me.GetType().Assembly)
         mQueueMessageOutput = 0
         mQueuedMessages = New Queue(Of String)
-        mAllWarnings = New HashSet(Of Integer)(New Integer() {42004, 42016, 42017, 42018, 42019, 42020, 42021, 42022, 42024, 42025,
-                                                              42026, 42028, 42029, 42030, 42031, 42104, 42105, 42110, 42324})
+        mAllWarnings = New HashSet(Of Integer)(New Integer() {40008, 40025, 40027, 40028, 40029, 40031, 40032, 40033, 40035, 40039,
+                                                              40042, 40059, 41999, 42004, 42015, 42016, 42017, 42018, 42019, 42020,
+                                                              42021, 42022, 42023, 42024, 42025, 42026, 42028, 42029, 42030, 42031,
+                                                              42032, 42036, 42104, 42105, 42107, 42110, 42324, 42326, 42358})
     End Sub
 
     ''' <summary>
