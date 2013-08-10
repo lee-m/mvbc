@@ -118,7 +118,6 @@ Public Class Driver
         usageText.AppendLine("/doc:<file>                       Generates XML documentation file to <file>.")
         usageText.AppendLine("")
         usageText.AppendLine("                                  - INPUT FILES -")
-        usageText.AppendLine("/addmodule:<file_list>            Reference metadata from the specified modules.")
         usageText.AppendLine("/link:<file_list>                 Embed metadata from the specified interop assembly. (Short form: /l)")
         usageText.AppendLine("/recurse:<wildcard>               Include all files in the current directory and subdirectories according to the wildcard specifications.")
         usageText.AppendLine("/reference:<file_list>            Reference metadata from the specified assembly. (Short form: /r)")

@@ -39,7 +39,6 @@ Public Class CompilerSettings
         OptionInfer = False
         OptionStrict = OptionStrictViolationValue.Ignore
 
-        ReferencedModules = New HashSet(Of String)()
         InteropAssemblies = New HashSet(Of String)
         ReferencedAssemblies = New HashSet(Of String)
         InputFiles = New List(Of SourceFile)
@@ -80,12 +79,6 @@ Public Class CompilerSettings
     ''' </summary>
     ''' <remarks></remarks>
     Public ShowHelp As Boolean
-
-    ''' <summary>
-    ''' Modules to load reference metadata from.
-    ''' </summary>
-    ''' <remarks></remarks>
-    Public ReferencedModules As HashSet(Of String)
 
     ''' <summary>
     ''' Interop assemblies to embed metadata from.

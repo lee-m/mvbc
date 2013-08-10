@@ -9,7 +9,6 @@
 '#compiler-message:/doc[+|-]                         Generates XML documentation file.
 '#compiler-message:/doc:<file>                       Generates XML documentation file to <file>.
 '#compiler-message:                                  - INPUT FILES -
-'#compiler-message:/addmodule:<file_list>            Reference metadata from the specified modules.
 '#compiler-message:/link:<file_list>                 Embed metadata from the specified interop assembly. (Short form: /l)
 '#compiler-message:/recurse:<wildcard>               Include all files in the current directory and subdirectories according to the wildcard specifications.
 '#compiler-message:/reference:<file_list>            Reference metadata from the specified assembly. (Short form: /r)
