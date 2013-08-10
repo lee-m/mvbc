@@ -434,6 +434,14 @@ Public Class CommandLineParser
                 settings.ShowHelp = True
                 Return ParseOptionResult.Stop
 
+            Case "keyfile"
+
+                If String.IsNullOrEmpty(argValue) Then
+                    mDiagnosticsMngr.CommandLineError(2006, "keyfile", ":<file>")
+                Else
+                    settings.KeyFile = argValue
+                End If
+
             Case "libpath"
 
                 If String.IsNullOrEmpty(argValue) Then
