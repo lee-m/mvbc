@@ -39,9 +39,9 @@ Public Class CompilerSettings
         OptionInfer = False
         OptionStrict = OptionStrictViolationValue.Ignore
 
-        AddModuleList = New HashSet(Of String)()
+        ReferencedModules = New HashSet(Of String)()
         InteropAssemblies = New HashSet(Of String)
-        ReferencedFiles = New HashSet(Of String)
+        ReferencedAssemblies = New HashSet(Of String)
         InputFiles = New List(Of SourceFile)
         LinkResources = New HashSet(Of String)
         ResourceFiles = New HashSet(Of String)
@@ -85,7 +85,7 @@ Public Class CompilerSettings
     ''' Modules to load reference metadata from.
     ''' </summary>
     ''' <remarks></remarks>
-    Public AddModuleList As HashSet(Of String)
+    Public ReferencedModules As HashSet(Of String)
 
     ''' <summary>
     ''' Interop assemblies to embed metadata from.
@@ -97,7 +97,7 @@ Public Class CompilerSettings
     ''' Set of files to reference metadata form.
     ''' </summary>
     ''' <remarks></remarks>
-    Public ReferencedFiles As HashSet(Of String)
+    Public ReferencedAssemblies As HashSet(Of String)
 
     ''' <summary>
     ''' List of source files to compile.

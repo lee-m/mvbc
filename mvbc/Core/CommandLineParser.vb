@@ -200,7 +200,7 @@ Public Class CommandLineParser
         End If
 
         'Make sure that any referenced file can be found
-        ValidateReferencedFiles(settings.ReferencedFiles, settings.LibraryPaths)
+        ValidateReferencedFiles(settings.ReferencedAssemblies, settings.LibraryPaths)
 
         Return settings
 
@@ -219,25 +219,33 @@ Public Class CommandLineParser
     Private Sub ValidateReferencedFiles(referencedFiles As HashSet(Of String),
                                         libraryPaths As IEnumerable(Of String))
 
-        'TODO: Attempting to load the same assembly via two different files should be rejected
         Dim searchPaths As New List(Of String)
         searchPaths.Add(Environment.CurrentDirectory)
         searchPaths.AddRange(libraryPaths)
 
+        'Keep track of the name of each referenced assembly so we can detect duplicates
+        Dim referencedAssemblyNames As New HashSet(Of String)
+
         For Each referencedFile In referencedFiles
 
-            Dim foundFile As Boolean = False
+            Dim foundFilePath As String = Nothing
 
             'If we have an absolute path, use that. Otherwise make a pass through each library path and try and find
             'the file in there
             If Path.IsPathRooted(referencedFile) Then
-                foundFile = File.Exists(referencedFile)
+
+                If File.Exists(referencedFile) Then
+                    foundFilePath = referencedFile
+                End If
+
             Else
 
                 For Each searchPath In searchPaths
 
-                    If File.Exists(Path.Combine(searchPath, referencedFile)) Then
-                        foundFile = True
+                    Dim tempPath As String = Path.Combine(searchPath, referencedFile)
+
+                    If File.Exists(tempPath) Then
+                        foundFilePath = tempPath
                         Exit For
                     End If
 
@@ -245,12 +253,57 @@ Public Class CommandLineParser
 
             End If
 
-            If Not foundFile Then
+            If String.IsNullOrEmpty(foundFilePath) Then
+
                 mDiagnosticsMngr.CommandLineError(2017, Path.GetFileName(referencedFile))
                 Exit Sub
+
+            Else
+                CheckReferencedFileIsValidAssembly(foundFilePath, referencedAssemblyNames)
             End If
 
         Next
+
+    End Sub
+
+    ''' <summary>
+    ''' Checks that a referenced file specified via /r: or /reference: (and has already been checked that it does exist) is 
+    ''' a valid assembly and hasn't already been loaded via another file path
+    ''' </summary>
+    ''' <param name="assemblyPath"></param>
+    ''' <param name="prevLoadedAssemblies"></param>
+    ''' <remarks></remarks>
+    Private Sub CheckReferencedFileIsValidAssembly(assemblyPath As String, prevLoadedAssemblies As HashSet(Of String))
+
+        'Make sure that it is an assembly
+        Dim validAssembly As Boolean = False
+        Dim referencedAssemblyName As String = Nothing
+
+        Try
+
+            'GetAssemblyName will throw an exception if the file is not a valid assembly
+            referencedAssemblyName = AssemblyName.GetAssemblyName(assemblyPath).Name
+            validAssembly = True
+
+        Catch badFormatEx As BadImageFormatException
+            validAssembly = False
+
+        End Try
+
+        If Not validAssembly Then
+            mDiagnosticsMngr.FatalError(2000, String.Format("'{0}' cannot be referenced because it is not an assembly.", assemblyPath))
+            Exit Sub
+        End If
+
+        'Reject attempts to load the same assembly via two different files
+        If Not prevLoadedAssemblies.Add(referencedAssemblyName) Then
+
+            mDiagnosticsMngr.FatalError(2000,
+                                        String.Format("Project already has a reference to assembly {0}. A second reference to '{1}' cannot be added.",
+                                                      referencedAssemblyName, assemblyPath))
+            Exit Sub
+
+        End If
 
     End Sub
 
@@ -523,8 +576,8 @@ Public Class CommandLineParser
                     'Any referenced file's validity is checked after all the options are parsed so that we can take into 
                     'account any /libpath options
                     Dim referencedFiles As String() = argValue.Split(","c)
-                    settings.ReferencedFiles.UnionWith(referencedFiles)
-                    
+                    settings.ReferencedAssemblies.UnionWith(referencedFiles)
+
                 End If
 
             Case "quiet"

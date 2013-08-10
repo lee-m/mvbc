@@ -88,6 +88,7 @@
     <Import Include="System.Diagnostics" />
     <Import Include="System.IO" />
     <Import Include="System.Linq" />
+    <Import Include="System.Reflection" />
     <Import Include="System.Resources" />
     <Import Include="System.Text" />
     <Import Include="System.Xml.Linq" />

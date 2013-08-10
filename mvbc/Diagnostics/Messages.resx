@@ -117,6 +117,10 @@
   <resheader name="writer">
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
+  <data name="2000" xml:space="preserve">
+    <value>compiler initialization failed unexpectedly: {0}</value>
+    <comment> </comment>
+  </data>
   <data name="2003" xml:space="preserve">
     <value>response file '{0}' included multiple times</value>
   </data>
