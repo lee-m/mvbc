@@ -613,6 +613,14 @@ Public Class CommandLineParser
                     settings.RootNamespace = argValue
                 End If
 
+            Case "sdkpath"
+
+                If String.IsNullOrEmpty(argValue) Then
+                    mDiagnosticsMngr.CommandLineError(2006, "sdkpath", ":<path>")
+                Else
+                    settings.SDKPath = argValue
+                End If
+
             Case "target", "t"
 
                 If String.IsNullOrEmpty(argValue) Then
