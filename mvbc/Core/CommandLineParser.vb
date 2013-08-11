@@ -434,6 +434,14 @@ Public Class CommandLineParser
                 settings.ShowHelp = True
                 Return ParseOptionResult.Stop
 
+            Case "keycontainer"
+
+                If String.IsNullOrEmpty(argValue) Then
+                    mDiagnosticsMngr.CommandLineError(2006, "keycontainer", ":<string>")
+                Else
+                    settings.KeyContainer = argValue
+                End If
+
             Case "keyfile"
 
                 If String.IsNullOrEmpty(argValue) Then
