@@ -434,6 +434,14 @@ Public Class CommandLineParser
                 settings.ShowHelp = True
                 Return ParseOptionResult.Stop
 
+            Case "imports"
+
+                If String.IsNullOrEmpty(argValue) Then
+                    mDiagnosticsMngr.CommandLineError(2006, "imports", ":<import_list>")
+                Else
+                    settings.GlobalImports.UnionWith(argValue.Split(","c))
+                End If
+
             Case "keycontainer"
 
                 If String.IsNullOrEmpty(argValue) Then
