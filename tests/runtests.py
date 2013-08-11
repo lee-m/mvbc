@@ -178,7 +178,9 @@ class regression_test:
                     return test_result(self.file_name, False, "Expected %d messages, got %d" % (len(self.compiler_messages), len(receivedMessages)));
         
                 #Check that the messages are the same
-                if not receivedMessages.issubset(set(self.compiler_messages)):
+                matches = [message for message in receivedMessages if any(expMessage in message for expMessage in self.compiler_messages)]
+
+                if len(matches) <> len(self.compiler_messages):
                     return test_result(self.file_name, False, "Message contents differ");
          
                 return test_result(self.file_name);
