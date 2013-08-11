@@ -192,10 +192,9 @@ Public Class CommandLineParser
         'Process the standard VBC.rsp file unless /noconfig was specified
         If Not settings.NoConfig Then
 
-            'TODO: uncomment once the rest of the command line parsing is in place
-            'Using reader As New StreamReader("mvbc.rsp")
-            '    ParseResponseFile(reader, settings)
-            'End Using
+            Using reader As New StreamReader("mvbc.rsp")
+                ParseResponseFile(reader, settings)
+            End Using
 
         End If
 
