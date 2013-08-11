@@ -691,6 +691,34 @@ Public Class CommandLineParser
 
                 End If
 
+            Case "win32icon"
+
+                If String.IsNullOrEmpty(argValue) Then
+                    mDiagnosticsMngr.CommandLineError(2006, "win32icon", ":<file>")
+                ElseIf Not String.IsNullOrEmpty(settings.Win32ResourceFileName) Then
+                    mDiagnosticsMngr.CommandLineError(2023)
+                Else
+                    settings.Win32IconFileName = argValue
+                End If
+
+            Case "win32manifest"
+
+                If String.IsNullOrEmpty(argValue) Then
+                    mDiagnosticsMngr.CommandLineError(2006, "win32manifest", ":<file>")
+                Else
+                    settings.Win32ManifestFileName = argValue
+                End If
+
+            Case "win32resource"
+
+                If String.IsNullOrEmpty(argValue) Then
+                    mDiagnosticsMngr.CommandLineError(2006, "win32resource", ":<file>")
+                ElseIf Not String.IsNullOrEmpty(settings.Win32IconFileName) Then
+                    mDiagnosticsMngr.CommandLineError(2023)
+                Else
+                    settings.Win32ResourceFileName = argValue
+                End If
+
             Case Else
                 mDiagnosticsMngr.CommandLineWarning(2007, argName)
 
