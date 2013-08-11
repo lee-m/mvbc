@@ -328,7 +328,7 @@ Public Class CommandLineParser
                 Continue While
             End If
 
-            Dim result = ParseOption(optionLine, settings)
+            Dim result = ParseOption(optionLine.TrimStart(New Char() {"/"c, "-"c}), settings)
 
             If result = ParseOptionResult.Stop Then
                 Exit Sub
@@ -415,6 +415,38 @@ Public Class CommandLineParser
                     settings.DebugInfoGenerationEnabled = True
                 Else
                     mDiagnosticsMngr.CommandLineError(2014, argValue, "debug")
+                End If
+
+            Case "define", "d"
+
+                If String.IsNullOrEmpty(argValue) Then
+                    mDiagnosticsMngr.CommandLineError(2006, argName, ":<symbol_list>")
+                Else
+
+                    Dim values As String() = argValue.Split(","c)
+
+                    For Each defineValue In values
+
+                        Dim symbolName As String = Nothing
+                        Dim symbolValue As String = Nothing
+
+                        If defineValue.Contains("="c) Then
+
+                            Dim eqPos As Integer = defineValue.IndexOf("=")
+                            symbolName = defineValue.Substring(0, eqPos)
+
+                            If Not defineValue.EndsWith("=") Then
+                                symbolValue = defineValue.Substring(eqPos + 1, defineValue.Length - eqPos - 1)
+                            End If
+
+                        Else
+                            symbolName = defineValue
+                        End If
+
+                        settings.Defines.Add(New KeyValuePair(Of String, String)(symbolName, symbolValue))
+
+                    Next
+
                 End If
 
             Case "delaysign", "delaysign+"
