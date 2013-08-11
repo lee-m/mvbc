@@ -21,18 +21,33 @@
 import sys;
 import os;
 import subprocess;
+import datetime;
+import shutil;
 
 from sys import stdout, stdin;
 from os import getcwd;
 from os.path import abspath, isfile, join, basename;
 
-#Location to the compiler executable
-COMPILER_EXE_LOCATION = ".\\mvbc\\bin\\mvbc.exe";
+#Directory where the test run output goes
+TEST_RUN_FOLDER = "test runs";
+TEST_RUN_OUTPUT_FOLDER = "output";
+
+#Location of any files which are referenced by a test relative to the current test run folder
+TEST_REFERENCES_FOLDER = "..\\..\\references"
+
+#Location to the compiler executable and built in response file relative to the
+#run folder from within the test runs folder
+COMPILER_EXE_LOCATION = "..\\..\\..\\mvbc\\bin\\mvbc.exe";
+COMPILER_RSP_FILE = "..\\..\\..\mvbc\\bin\\mvbc.rsp";
 
 #Possible directives that may appear within a file
 COMPILER_OPTS_DIRECTIVE = "'#compiler-options:";
 COMPILER_MESSAGE_DIRECTIVE = "'#compiler-message:";
 COMPILER_EXIT_CODE_DIRECTIVE = "'#exit-code:";
+IGNORE_GLOBAL_OPTS_DIRECTIVE = "'#ignore-global-opts";
+
+#Global compiler options passed to each test
+GLOBAL_COMPILER_OPTS = ["/nologo", "/noconfig"];
 
 #Test run execution success/failure 
 class test_result:
@@ -50,16 +65,20 @@ class test_result:
 #represents a single regression test to execute 
 class regression_test:
 
-    def __init__(self, fileName):
+    def __init__(self, fileName, runDirectory):
         
         #Lists of compiler options and expected output and the desired exit code
         self.file_name = fileName;
+        self.run_directory = runDirectory;
         self.compiler_options = None;
         self.compiler_messages = [];
         self.expected_exit_code = 0;
 
         seenCompilerOptionsDirective = False;
         seenCompilerExitCodeDirective = False;
+        seenIgnoreGlobalOptsDirective = False;
+
+        ignoreGlobalOpts = False;
 
         #Open the file and parse any directives
         with open(fileName, "r") as testFile:
@@ -90,75 +109,79 @@ class regression_test:
                         seenCompilerExitCodeDirective = True;
                         self.expected_exit_code = int(line.replace(COMPILER_EXIT_CODE_DIRECTIVE, "").strip());
 
+                elif line.startswith(IGNORE_GLOBAL_OPTS_DIRECTIVE):
+
+                    if seenIgnoreGlobalOptsDirective:
+                        raise Exception("Multiple #ignore-global-opts directives found in file %s" % fileName);
+                    else:
+                        seenIgnoreGlobalOptsDirective = True;
+                        ignoreGlobalOpts = True;
+
                 else:
 
                     #End of the directives section
                     break;
 
+
+            #Add the global options to this test if required
+            if not ignoreGlobalOpts:
+                self.compiler_options += GLOBAL_COMPILER_OPTS;
+
     #Executes the test and checks the expected exit-code/expected messages.
     def execute_test(self):
 
         #Names of the temp files used to hold the stdout/stderr output
-        stdOutRedirectFileName = self.file_name.replace(".vb", ".stdout");
-        stdErrRedirectFileName = self.file_name.replace(".vb", ".stderr");
+        stdOutRedirectFileName = join(TEST_RUN_OUTPUT_FOLDER, os.path.basename(self.file_name).replace(".vb", ".stdout"));
+        stdErrRedirectFileName = join(TEST_RUN_OUTPUT_FOLDER, os.path.basename(self.file_name).replace(".vb", ".stderr"));
 
-        try:
+        #Create file handles for holding the stdout/stderr output
+        with open(stdOutRedirectFileName, "w+") as stdOutHandle:
 
-            #Create file handles for holding the stdout/stderr output
-            stdOutHandle = open(stdOutRedirectFileName, "w+");
-            stdErrHandle = open(stdOutRedirectFileName, "w+");
+            with open(stdErrRedirectFileName, "w+") as stdErrHandle:
 
-            #Run the compiler 
-            proc = subprocess.Popen([os.path.abspath(COMPILER_EXE_LOCATION)] + self.compiler_options, stdout = stdOutHandle, stderr = stdErrHandle);
-            exitCode = proc.wait();
+                #Run the compiler 
+                proc = subprocess.Popen([os.path.abspath(COMPILER_EXE_LOCATION)] + self.compiler_options, stdout = stdOutHandle, stderr = stdErrHandle);
+                exitCode = proc.wait();
 
-            stdOutHandle.seek(0, 0);
-            stdErrHandle.seek(0, 0);
+                stdOutHandle.seek(0, 0);
+                stdErrHandle.seek(0, 0);
 
-            #Parse the output into a list of lines of text to check against the expected output
-            #(stdout, stderr) = proc.communicate();
-            receivedMessages = set([o.replace("mvbc : ", "").strip() for o in stdOutHandle.read().split("\n") if len(o) > 0]);
+                #Parse the output into a list of lines of text to check against the expected output
+                #(stdout, stderr) = proc.communicate();
+                receivedMessages = set([o.replace("mvbc : ", "").strip() for o in stdOutHandle.read().split("\n") if len(o) > 0]);
 
-            if os.path.exists(stdErrRedirectFileName):
-                receivedMessages = receivedMessages.union([e.replace("mvbc : ", "").strip() for e in stdErrHandle.read().split("\n") if len(e) > 0]);
+                if os.path.exists(stdErrRedirectFileName):
+                    receivedMessages = receivedMessages.union([e.replace("mvbc : ", "").strip() for e in stdErrHandle.read().split("\n") if len(e) > 0]);
 
-            stdOutHandle.close();
-            stdErrHandle.close();
+                stdOutHandle.close();
+                stdErrHandle.close();
 
-            #Check for ICE messages first, one of these may result in different exit codes or a different number of messages
-            #to be output
-            iceMessageFound = False;
+                #Check for ICE messages first, one of these may result in different exit codes or a different number of messages
+                #to be output
+                iceMessageFound = False;
 
-            for message in receivedMessages:
+                for message in receivedMessages:
 
-                if "Internal compiler error" in message:
-                    iceMessageFound = True;
-                    break;
+                    if "Internal compiler error" in message:
+                        iceMessageFound = True;
+                        break;
 
-            if iceMessageFound:
-                return test_result(self.file_name, False, "Internal compiler error");
+                if iceMessageFound:
+                    return test_result(self.file_name, False, "Internal compiler error");
 
-            #Check the exit code matches what we expect
-            if exitCode != self.expected_exit_code:
-                return test_result(self.file_name, False, "Expected exit code %d, got %d" % (self.expected_exit_code, exitCode));
+                #Check the exit code matches what we expect
+                if exitCode != self.expected_exit_code:
+                    return test_result(self.file_name, False, "Expected exit code %d, got %d" % (self.expected_exit_code, exitCode));
 
-            #Check we got the expected number of messages
-            if len(receivedMessages) != len(self.compiler_messages):
-                return test_result(self.file_name, False, "Expected %d messages, got %d" % (len(self.compiler_messages), len(receivedMessages)));
+                #Check we got the expected number of messages
+                if len(receivedMessages) != len(self.compiler_messages):
+                    return test_result(self.file_name, False, "Expected %d messages, got %d" % (len(self.compiler_messages), len(receivedMessages)));
         
-            #Check that the messages are the same
-            if not receivedMessages.issubset(set(self.compiler_messages)):
-                return test_result(self.file_name, False, "Message contents differ");
+                #Check that the messages are the same
+                if not receivedMessages.issubset(set(self.compiler_messages)):
+                    return test_result(self.file_name, False, "Message contents differ");
          
-            return test_result(self.file_name);
-
-        finally:
-            
-            if os.path.exists(stdOutRedirectFileName):
-                os.remove(stdOutRedirectFileName);
-
-            if os.path.exists(stdErrRedirectFileName):
-                os.remove(stdErrRedirectFileName);
+                return test_result(self.file_name);
 
 #Script entry point
 if __name__ == "__main__":
@@ -166,13 +189,37 @@ if __name__ == "__main__":
     #Location of the regression tests folder and compiler executable
     testsPath =  join(getcwd(), "tests");
 
+    #Create the test run folder if needed
+    if not os.path.exists(TEST_RUN_FOLDER):
+        os.makedirs(TEST_RUN_FOLDER);
+
+    os.chdir(TEST_RUN_FOLDER);
+
+    #Create the folder for this run
+    currTime = datetime.datetime.now();
+    testRunFolderName = "%d_%02d_%02d_%02d_%02d_%02d" % (currTime.year, currTime.month, currTime.day, 
+                                                         currTime.hour, currTime.minute, currTime.second);
+    os.makedirs(testRunFolderName);
+    os.chdir(testRunFolderName);
+
+    #Create the output folder
+    os.makedirs(TEST_RUN_OUTPUT_FOLDER);
+
+    #Copy the compiler executable and response file
+    shutil.copyfile(COMPILER_EXE_LOCATION, "mvbc.exe");
+    shutil.copyfile(COMPILER_RSP_FILE, "mvbc.rsp");
+
+    #Copy any references to be alongside the compiler executable
+    for refFile in os.listdir(TEST_REFERENCES_FOLDER):
+        shutil.copy(os.path.abspath(join(TEST_REFERENCES_FOLDER, refFile)), join(os.getcwd(), refFile));
+
     #Enumerate all of the tests within the tests folder and any sub-folders within it and 
     #create a regresstion test instance for them
     executedTests = 0;
     tests = []
 
     for root, subfolders, files in os.walk(testsPath):
-        tests += [regression_test(join(root, f)) for f in files];
+        tests += [regression_test(join(root, f), testRunFolderName) for f in files];
 
     numTests = len(tests);
     numTestsPassed = 0;

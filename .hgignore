@@ -7,3 +7,4 @@ mvbc/SortMessages.bat
 mvbc/SortResx.exe
 *.user
 Pageant.bat
+tests/test runs/*
