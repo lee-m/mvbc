@@ -1,7 +1,0 @@
-First lines in the file indicate compiler options and expected output. Valid entries are:
-
-#compiler-options:<command line options>
-#compiler-message:<output text>
-#exit-code:<code>
-
-For multiple messages, use multiple #compiler-output lines, one for each expected output.

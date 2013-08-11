@@ -1,0 +1,15 @@
+First lines in the file indicate compiler options and expected output. Valid entries are:
+
+#compiler-options:<command line options>
+#compiler-message:<output text>
+#exit-code:<code>
+#ignore-global-opts
+
+For multiple messages, use multiple #compiler-output lines, one for each expected output.
+
+By default, the options /noconfig and /nologo will be passed to every test in addition to any options
+specified in the file. To suppress the automatic inclusion of these options add the #ignore-global-opts
+
+If the test requires any references, place them in the references folder and refer to them as /r:SomeFile.dll
+for example as the contents of the references folder will be copied alongside the compiler executable
+in the test run folder
