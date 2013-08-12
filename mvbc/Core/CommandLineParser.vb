@@ -201,6 +201,18 @@ Public Class CommandLineParser
         'Make sure that any referenced file can be found
         ValidateReferencedFiles(settings.ReferencedAssemblies, settings.LibraryPaths)
 
+        'Try and derive the output filename if one wasn't specified
+        If String.IsNullOrEmpty(settings.OutputFile) Then
+
+            If settings.InputFiles.Count = 0 _
+               AndAlso settings.Resources.Count > 0 Then
+                mDiagnosticsMngr.CommandLineError(2029)
+            ElseIf settings.InputFiles.Count > 0 Then
+                settings.OutputFile = Path.GetFileNameWithoutExtension(settings.InputFiles.First().FileName)
+            End If
+
+        End If
+
         Return settings
 
     End Function
@@ -513,6 +525,39 @@ Public Class CommandLineParser
                         End Try
 
                     Next
+
+                End If
+
+            Case "linkresource", "linkres", "resource", "res"
+
+                '/resource and /res indicate an embedded resource
+                Dim embedded As Boolean = argValue.StartsWith("r")
+
+                If String.IsNullOrEmpty(argValue) Then
+                    mDiagnosticsMngr.CommandLineError(2006, argName, ":<resinfo>")
+                Else
+
+                    Dim components() As String = argValue.Split(","c)
+
+                    Select Case components.Length
+
+                        Case 1
+                            settings.Resources.Add(New AssemblyResource(components(0), Nothing, ResourceAttributes.Public, embedded))
+
+                        Case 2
+                            settings.Resources.Add(New AssemblyResource(components(0), components(1), ResourceAttributes.Public, embedded))
+
+                        Case 3
+
+                            If components(2) = "public" Then
+                                settings.Resources.Add(New AssemblyResource(components(0), components(1), ResourceAttributes.Public, embedded))
+                            ElseIf components(2) = "private" Then
+                                settings.Resources.Add(New AssemblyResource(components(0), components(1), ResourceAttributes.Private, embedded))
+                            Else
+                                mDiagnosticsMngr.CommandLineError(2014, components(2), argName)
+                            End If
+
+                    End Select
 
                 End If
 

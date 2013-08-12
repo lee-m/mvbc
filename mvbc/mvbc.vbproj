@@ -95,6 +95,7 @@
     <Import Include="System.Threading.Tasks" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Core\AssemblyResource.vb" />
     <Compile Include="Core\CommandLineParser.vb" />
     <Compile Include="Core\CompilerSettings.vb" />
     <Compile Include="Core\Driver.vb" />
