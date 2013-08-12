@@ -180,7 +180,18 @@ Public Class CommandLineParser
                 End If
 
             Else
-                settings.InputFiles.Add(New SourceFile(argument))
+
+                'If the filename specified by this argument is not rooted, treat it as a wildcard
+                If Path.IsPathRooted(argument) Then
+                    settings.InputFiles.Add(New SourceFile(argument))
+                Else
+
+                    For Each fileName In Directory.GetFiles(Environment.CurrentDirectory, argument)
+                        settings.InputFiles.Add(New SourceFile(fileName))
+                    Next
+
+                End If
+
             End If
 
             If optParseResult = ParseOptionResult.Stop Then
