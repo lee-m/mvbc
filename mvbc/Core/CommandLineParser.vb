@@ -199,7 +199,12 @@ Public Class CommandLineParser
         End If
 
         'Make sure that any referenced file can be found
-        ValidateReferencedFiles(settings.ReferencedAssemblies, settings.LibraryPaths)
+        Dim searchPaths As New List(Of String)
+        searchPaths.Add(Environment.CurrentDirectory)
+        searchPaths.AddRange(settings.LibraryPaths)
+
+        ValidateReferencedAssemblies(settings.ReferencedAssemblies, searchPaths)
+        ValidateReferencedInteropAssemblies(settings.InteropAssemblies, searchPaths)
 
         'Try and derive the output filename if one wasn't specified
         If String.IsNullOrEmpty(settings.OutputFile) Then
@@ -222,47 +227,44 @@ Public Class CommandLineParser
 #Region "Private Methods"
 
     ''' <summary>
+    ''' Checks that any referenced interop assemblies exist.
+    ''' </summary>
+    ''' <param name="referencedInteropAssemblies">Set of referenced interop assemblies.</param>
+    ''' <param name="searchPaths">Library search paths to try and locate the file.</param>
+    ''' <remarks></remarks>
+    Private Sub ValidateReferencedInteropAssemblies(referencedInteropAssemblies As HashSet(Of String),
+                                                    searchPaths As IList(Of String))
+
+        For Each referencedFile In referencedInteropAssemblies
+
+            Dim foundFilePath As String = GetReferencedFileAbsolutePath(referencedFile, searchPaths)
+
+            If String.IsNullOrEmpty(foundFilePath) Then
+
+                mDiagnosticsMngr.CommandLineError(2017, Path.GetFileName(referencedFile))
+                Exit Sub
+
+            End If
+
+        Next
+
+    End Sub
+
+    ''' <summary>
     ''' Ensures that any referenced file can be found.
     ''' </summary>
     ''' <param name="referencedFiles">The set of referenced files specified on the command line.</param>
-    ''' <param name="libraryPaths">Library search paths to process when trying to find a referenced file.</param>
+    ''' <param name="searchPaths">Library search paths to process when trying to find a referenced file.</param>
     ''' <remarks></remarks>
-    Private Sub ValidateReferencedFiles(referencedFiles As HashSet(Of String),
-                                        libraryPaths As IEnumerable(Of String))
-
-        Dim searchPaths As New List(Of String)
-        searchPaths.Add(Environment.CurrentDirectory)
-        searchPaths.AddRange(libraryPaths)
+    Private Sub ValidateReferencedAssemblies(referencedAssemblies As HashSet(Of String),
+                                             searchPaths As IList(Of String))
 
         'Keep track of the name of each referenced assembly so we can detect duplicates
         Dim referencedAssemblyNames As New HashSet(Of String)
 
-        For Each referencedFile In referencedFiles
+        For Each referencedFile In referencedAssemblies
 
-            Dim foundFilePath As String = Nothing
-
-            'If we have an absolute path, use that. Otherwise make a pass through each library path and try and find
-            'the file in there
-            If Path.IsPathRooted(referencedFile) Then
-
-                If File.Exists(referencedFile) Then
-                    foundFilePath = referencedFile
-                End If
-
-            Else
-
-                For Each searchPath In searchPaths
-
-                    Dim tempPath As String = Path.Combine(searchPath, referencedFile)
-
-                    If File.Exists(tempPath) Then
-                        foundFilePath = tempPath
-                        Exit For
-                    End If
-
-                Next
-
-            End If
+            Dim foundFilePath As String = GetReferencedFileAbsolutePath(referencedFile, searchPaths)
 
             If String.IsNullOrEmpty(foundFilePath) Then
 
@@ -276,6 +278,44 @@ Public Class CommandLineParser
         Next
 
     End Sub
+
+    ''' <summary>
+    ''' Given the name of a referenced file and a set of search paths, determines the absolute path to the file.
+    ''' </summary>
+    ''' <param name="referencedFile">File to get the absolute path for.</param>
+    ''' <param name="searchPaths">Search paths to try and find the file.</param>
+    ''' <returns>The absolute path to the file if found, otherwise Nothing.</returns>
+    ''' <remarks></remarks>
+    Private Function GetReferencedFileAbsolutePath(referencedFile As String, searchPaths As IList(Of String)) As String
+
+        Dim foundFilePath As String = Nothing
+
+        'If we have an absolute path, use that. Otherwise make a pass through each library path and try and find
+        'the file in there
+        If Path.IsPathRooted(referencedFile) Then
+
+            If File.Exists(referencedFile) Then
+                foundFilePath = referencedFile
+            End If
+
+        Else
+
+            For Each searchPath In searchPaths
+
+                Dim tempPath As String = Path.Combine(searchPath, referencedFile)
+
+                If File.Exists(tempPath) Then
+                    foundFilePath = tempPath
+                    Exit For
+                End If
+
+            Next
+
+        End If
+
+        Return foundFilePath
+
+    End Function
 
     ''' <summary>
     ''' Checks that a referenced file specified via /r: or /reference: (and has already been checked that it does exist) is 
@@ -525,6 +565,17 @@ Public Class CommandLineParser
                         End Try
 
                     Next
+
+                End If
+
+            Case "link"
+
+                If String.IsNullOrEmpty(argValue) Then
+                    mDiagnosticsMngr.CommandLineError(2006, "link", ":<file_list>")
+                Else
+
+                    Dim files() As String = argValue.Split(","c)
+                    settings.InteropAssemblies.UnionWith(files)
 
                 End If
 
