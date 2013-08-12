@@ -42,8 +42,7 @@ Public Class CompilerSettings
         InteropAssemblies = New HashSet(Of String)
         ReferencedAssemblies = New HashSet(Of String)
         InputFiles = New List(Of SourceFile)
-        LinkResources = New HashSet(Of String)
-        ResourceFiles = New HashSet(Of String)
+        Resources = New List(Of AssemblyResource)
         Defines = New List(Of KeyValuePair(Of String, String))
         GlobalImports = New HashSet(Of String)
         LibraryPaths = New List(Of String)
@@ -99,22 +98,16 @@ Public Class CompilerSettings
     Public InputFiles As List(Of SourceFile)
 
     ''' <summary>
-    ''' External assembly resources to link.
+    ''' Set of resources to include.
     ''' </summary>
     ''' <remarks></remarks>
-    Public LinkResources As HashSet(Of String)
+    Public Resources As List(Of AssemblyResource)
 
     ''' <summary>
     ''' Indicates whether the default manifest should not be embedded in the manifest section of the output PE file.
     ''' </summary>
     ''' <remarks></remarks>
     Public NoWin32Manifest As Boolean
-
-    ''' <summary>
-    ''' Files to embed as assembly resources
-    ''' </summary>
-    ''' <remarks></remarks>
-    Public ResourceFiles As HashSet(Of String)
 
     ''' <summary>
     ''' Win32 icon file for the default Win32 resources.
