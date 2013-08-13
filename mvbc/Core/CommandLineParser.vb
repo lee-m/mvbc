@@ -729,6 +729,36 @@ Public Class CommandLineParser
                     settings.OutputFile = argValue
                 End If
 
+            Case "recurse"
+
+                If String.IsNullOrEmpty(argValue) Then
+                    mDiagnosticsMngr.CommandLineError(2006, "recurse", ":<wildcard>")
+                Else
+
+                    Try
+
+                        Dim startPath As String = Path.GetDirectoryName(argValue)
+                        Dim pattern As String = Nothing
+
+                        If String.IsNullOrEmpty(startPath) Then
+                            startPath = Environment.CurrentDirectory
+                            pattern = argValue
+                        Else
+
+                            'Removing the start path will leave the trailing directory separator to 
+                            'need to substring it out
+                            pattern = argValue.Replace(startPath, String.Empty).Substring(1)
+
+                        End If
+
+                        RecurseAddInputFiles(startPath, pattern, settings.InputFiles)
+
+                    Catch ex As Exception
+                        mDiagnosticsMngr.CommandLineError(2014, argValue, argName)
+                    End Try
+
+                End If
+
             Case "reference", "r"
 
                 If String.IsNullOrEmpty(argValue) Then
@@ -866,6 +896,26 @@ Public Class CommandLineParser
         Return ParseOptionResult.Continue
 
     End Function
+
+    ''' <summary>
+    ''' Recursively adds any input file matching the search pattern within the specified directory
+    ''' or any child directory.
+    ''' </summary>
+    ''' <param name="directoryName">Directory to search.</param>
+    ''' <param name="pattern">Wildcard pattern to use to find files.</param>
+    ''' <param name="inputFiles">List of input files to add to.</param>
+    ''' <remarks></remarks>
+    Private Sub RecurseAddInputFiles(directoryName As String, pattern As String, inputFiles As List(Of SourceFile))
+
+        For Each inputFile In Directory.GetFiles(directoryName, pattern)
+            inputFiles.Add(New SourceFile(New FileInfo(inputFile).FullName))
+        Next
+
+        For Each subDirectory In Directory.GetDirectories(directoryName)
+            RecurseAddInputFiles(subDirectory, pattern, inputFiles)
+        Next
+
+    End Sub
 
     ''' <summary>
     ''' Parses a set of warning numbers from a command line option's value.
