@@ -25,6 +25,12 @@
 Public Class Token
 
     ''' <summary>
+    ''' The input file this token came from.
+    ''' </summary>
+    ''' <remarks></remarks>
+    Private mFile As SourceFile
+
+    ''' <summary>
     ''' Line number in the source file this token was from.
     ''' </summary>
     ''' <remarks></remarks>
@@ -42,169 +48,303 @@ Public Class Token
     ''' <remarks></remarks>
     Private mTokenType As TokenType
 
-#Region "TokenType Enumeration"
-
     ''' <summary>
-    ''' Enumeration of potential token types.
+    ''' The actual value of this token.
     ''' </summary>
     ''' <remarks></remarks>
-    Public Enum TokenType
+    Private mValue As Object
 
-        'Keywords
-        KW_ADDHANDLER
-        KW_ADDRESSOF
-        KW_ALIAS
-        KW_AND
-        KW_ANDALSO
-        KW_AS
-        KW_BOOLEAN
-        KW_BYREF
-        KW_BYTE
-        KW_BYVAL
-        KW_CALL
-        KW_CASE
-        KW_CATCH
-        KW_CBOOL
-        KW_CBYTE
-        KW_CCHAR
-        KW_CDATE
-        KW_CDBL
-        KW_CDEC
-        KW_CHAR
-        KW_CINT
-        KW_CLASS
-        KW_CLNG
-        KW_COBJ
-        KW_CONST
-        KW_CONTINUE
-        KW_CSBYTE
-        KW_CSHORT
-        KW_CSNG
-        KW_CSTR
-        KW_CTYPE
-        KW_CUINT
-        KW_CULNG
-        KW_CUSHORT
-        KW_DATE
-        KW_DECIMAL
-        KW_DECLARE
-        KW_DEFAULT
-        KW_DELEGATE
-        KW_DIM
-        KW_DIRECTCAST
-        KW_DO
-        KW_DOUBLE
-        KW_EACH
-        KW_ELSE
-        KW_ELSEIF
-        KW_END
-        KW_ENDIF
-        KW_ENUM
-        KW_ERASE
-        KW_ERROR
-        KW_EVENT
-        KW_EXIT
-        KW_FALSE
-        KW_FINALLY
-        KW_FOR
-        KW_FRIEND
-        KW_FUNCTION
-        KW_GET
-        KW_GETTYPE
-        KW_GETXMLNAMESPACE
-        KW_GLOBAL
-        KW_GOSUB
-        KW_GOTO
-        KW_HANDLES
-        KW_IF
-        KW_IMPLEMENTS
-        KW_IMPORTS
-        KW_IN
-        KW_INHERITS
-        KW_INTEGER
-        KW_INTERFACE
-        KW_IS
-        KW_ISNOT
-        KW_LET
-        KW_LIB
-        KW_LIKE
-        KW_LONG
-        KW_LOOP
-        KW_ME
-        KW_MOD
-        KW_MODULE
-        KW_MUSTINHERIT
-        KW_MUSTOVERRIDE
-        KW_MYBASE
-        KW_MYCLASS
-        KW_NAMESPACE
-        KW_NARROWING
-        KW_NEW
-        KW_NEXT
-        KW_NOT
-        KW_NOTHING
-        KW_NOTINHERITABLE
-        KW_NOTOVERRIDABLE
-        KW_OBJECT
-        KW_OF
-        KW_ON
-        KW_OPERATOR
-        KW_OPTION
-        KW_OPTIONAL
-        KW_OR
-        KW_ORELSE
-        KW_OVERLOADS
-        KW_OVERRIDABLE
-        KW_OVERRIDES
-        KW_PARAMARRAY
-        KW_PARTIAL
-        KW_PRIVATE
-        KW_PROPERTY
-        KW_PROTECTED
-        KW_PUBLIC
-        KW_RAISEEVENT
-        KW_READONLY
-        KW_REDIM
-        KW_REM
-        KW_REMOVEHANDLER
-        KW_RESUME
-        KW_RETURN
-        KW_SBYTE
-        KW_SELECT
-        KW_SET
-        KW_SHADOWS
-        KW_SHARED
-        KW_SHORT
-        KW_SINGLE
-        KW_STATIC
-        KW_STEP
-        KW_STOP
-        KW_STRING
-        KW_STRUCTURE
-        KW_SUB
-        KW_SYNCLOCK
-        KW_THEN
-        KW_THROW
-        KW_TO
-        KW_TRUE
-        KW_TRY
-        KW_TRYCAST
-        KW_TYPEOF
-        KW_UINTEGER
-        KW_ULONG
-        KW_USHORT
-        KW_USING
-        KW_VARIANT
-        KW_WEND
-        KW_WHEN
-        KW_WHILE
-        KW_WIDENING
-        KW_WITH
-        KW_WITHEVENTS
-        KW_WRITEONLY
-        KW_XOR
-    End Enum
+#Region "Public Methods"
+
+    ''' <summary>
+    ''' Creates a new Token instance initialised with the specified values.
+    ''' </summary>
+    ''' <param name="sourceFile">The file this token originated form.</param>
+    ''' <param name="lineNumber">The line number this token was lexed from.</param>
+    ''' <param name="columnNumber">The column number of the first character of this token.</param>
+    ''' <param name="tokType">The type of token.</param>
+    ''' <param name="value">The actual textual value of the token as lexed from the source file.</param>
+    ''' <remarks></remarks>
+    Public Sub New(sourceFile As SourceFile,
+                   lineNumber As Integer,
+                   columnNumber As Integer,
+                   tokType As TokenType,
+                   value As Object)
+        mFile = sourceFile
+        mLineNumber = lineNumber
+        mColumnNumber = columnNumber
+        mTokenType = tokType
+        mValue = value
+    End Sub
+
+#End Region
+
+#Region "Properties"
+
+    ''' <summary>
+    ''' Accessor for the source file.
+    ''' </summary>
+    ''' <value></value>
+    ''' <returns></returns>
+    ''' <remarks></remarks>
+    Public ReadOnly Property SourceFile As SourceFile
+        Get
+            Return mFile
+        End Get
+    End Property
+
+    ''' <summary>
+    ''' Accessor for the line number.
+    ''' </summary>
+    ''' <value></value>
+    ''' <returns></returns>
+    ''' <remarks></remarks>
+    Public ReadOnly Property LineNumber As Integer
+        Get
+            Return mLineNumber
+        End Get
+    End Property
+
+    ''' <summary>
+    ''' Accessor for the column number.
+    ''' </summary>
+    ''' <value></value>
+    ''' <returns></returns>
+    ''' <remarks></remarks>
+    Public ReadOnly Property ColumnNumber As Integer
+        Get
+            Return mColumnNumber
+        End Get
+    End Property
+
+    ''' <summary>
+    ''' Accessor for the type of the token.
+    ''' </summary>
+    ''' <value></value>
+    ''' <returns></returns>
+    ''' <remarks></remarks>
+    Public ReadOnly Property TokType As TokenType
+        Get
+            Return mTokenType
+        End Get
+    End Property
+
+    ''' <summary>
+    ''' Accessor for the token's value.
+    ''' </summary>
+    ''' <value></value>
+    ''' <returns></returns>
+    ''' <remarks></remarks>
+    Public ReadOnly Property Value As Object
+        Get
+            Return mValue
+        End Get
+    End Property
 
 #End Region
 
 End Class
+
+#Region "TokenType Enumeration"
+
+''' <summary>
+''' Enumeration of potential token types.
+''' </summary>
+''' <remarks></remarks>
+Public Enum TokenType
+
+    'Keywords
+    KW_ADDHANDLER
+    KW_ADDRESSOF
+    KW_ALIAS
+    KW_AND
+    KW_ANDALSO
+    KW_AS
+    KW_BOOLEAN
+    KW_BYREF
+    KW_BYTE
+    KW_BYVAL
+    KW_CALL
+    KW_CASE
+    KW_CATCH
+    KW_CBOOL
+    KW_CBYTE
+    KW_CCHAR
+    KW_CDATE
+    KW_CDBL
+    KW_CDEC
+    KW_CHAR
+    KW_CINT
+    KW_CLASS
+    KW_CLNG
+    KW_COBJ
+    KW_CONST
+    KW_CONTINUE
+    KW_CSBYTE
+    KW_CSHORT
+    KW_CSNG
+    KW_CSTR
+    KW_CTYPE
+    KW_CUINT
+    KW_CULNG
+    KW_CUSHORT
+    KW_DATE
+    KW_DECIMAL
+    KW_DECLARE
+    KW_DEFAULT
+    KW_DELEGATE
+    KW_DIM
+    KW_DIRECTCAST
+    KW_DO
+    KW_DOUBLE
+    KW_EACH
+    KW_ELSE
+    KW_ELSEIF
+    KW_END
+    KW_ENDIF
+    KW_ENUM
+    KW_ERASE
+    KW_ERROR
+    KW_EVENT
+    KW_EXIT
+    KW_FALSE
+    KW_FINALLY
+    KW_FOR
+    KW_FRIEND
+    KW_FUNCTION
+    KW_GET
+    KW_GETTYPE
+    KW_GETXMLNAMESPACE
+    KW_GLOBAL
+    KW_GOSUB
+    KW_GOTO
+    KW_HANDLES
+    KW_IF
+    KW_IMPLEMENTS
+    KW_IMPORTS
+    KW_IN
+    KW_INHERITS
+    KW_INTEGER
+    KW_INTERFACE
+    KW_IS
+    KW_ISNOT
+    KW_LET
+    KW_LIB
+    KW_LIKE
+    KW_LONG
+    KW_LOOP
+    KW_ME
+    KW_MOD
+    KW_MODULE
+    KW_MUSTINHERIT
+    KW_MUSTOVERRIDE
+    KW_MYBASE
+    KW_MYCLASS
+    KW_NAMESPACE
+    KW_NARROWING
+    KW_NEW
+    KW_NEXT
+    KW_NOT
+    KW_NOTHING
+    KW_NOTINHERITABLE
+    KW_NOTOVERRIDABLE
+    KW_OBJECT
+    KW_OF
+    KW_ON
+    KW_OPERATOR
+    KW_OPTION
+    KW_OPTIONAL
+    KW_OR
+    KW_ORELSE
+    KW_OVERLOADS
+    KW_OVERRIDABLE
+    KW_OVERRIDES
+    KW_PARAMARRAY
+    KW_PARTIAL
+    KW_PRIVATE
+    KW_PROPERTY
+    KW_PROTECTED
+    KW_PUBLIC
+    KW_RAISEEVENT
+    KW_READONLY
+    KW_REDIM
+    KW_REM
+    KW_REMOVEHANDLER
+    KW_RESUME
+    KW_RETURN
+    KW_SBYTE
+    KW_SELECT
+    KW_SET
+    KW_SHADOWS
+    KW_SHARED
+    KW_SHORT
+    KW_SINGLE
+    KW_STATIC
+    KW_STEP
+    KW_STOP
+    KW_STRING
+    KW_STRUCTURE
+    KW_SUB
+    KW_SYNCLOCK
+    KW_THEN
+    KW_THROW
+    KW_TO
+    KW_TRUE
+    KW_TRY
+    KW_TRYCAST
+    KW_TYPEOF
+    KW_UINTEGER
+    KW_ULONG
+    KW_USHORT
+    KW_USING
+    KW_VARIANT
+    KW_WEND
+    KW_WHEN
+    KW_WHILE
+    KW_WIDENING
+    KW_WITH
+    KW_WITHEVENTS
+    KW_WRITEONLY
+    KW_XOR
+
+    'Operators
+    OP_PLUS
+    OP_PLUS_EQ
+    OP_SUBTRACT
+    OP_SUBTRACT_EQ
+    OP_MULTIPLY
+    OP_MULTIPLY_EQ
+    OP_DIVISION
+    OP_DIVISION_EQ
+    OP_INT_DIVISION
+    OP_INT_DIVISION_EQ
+    OP_CONCAT
+    OP_CONCAT_EQ
+    OP_LIKE
+    OP_MOD
+    OP_AND
+    OP_OR
+    OP_XOR
+    OP_EXPONENTIAL
+    OP_EXPONENTIAL_EQ
+    OP_LSHIFT
+    OP_LSHIFT_EQ
+    OP_RSHIFT
+    OP_RSHIFT_EQ
+    OP_EQUALS
+    OP_NOT_EQUAL
+    OP_LESS_THAN
+    OP_GREATER_THAN
+    OP_LESS_THAN_EQ
+    OP_GREATER_THAN_EQ
+    OP_NOT
+    OP_ISTRUE
+    OP_ISFALSE
+    OP_CTYPE
+
+    'Miscellaneous
+    TT_END_OF_STATEMENT
+    TT_END_OF_FILE
+End Enum
+
+#End Region

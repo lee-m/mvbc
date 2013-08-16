@@ -23,18 +23,25 @@
 ''' </summary>
 ''' <remarks></remarks>
 Public Class Lexer
+    Implements IDisposable
 
     ''' <summary>
-    ''' List of files to process.
+    ''' Encoding to open the source files in.
     ''' </summary>
     ''' <remarks></remarks>
-    Private mFiles As Queue(Of SourceFile)
+    Private mEncoding As Encoding
 
     ''' <summary>
-    ''' Current position in the current file.
+    ''' Input buffer to lex to the tokens from.
     ''' </summary>
     ''' <remarks></remarks>
-    Private mCurrPosition As CharEnumerator
+    Private mInputBuffer As LexerInputBuffer
+
+    ''' <summary>
+    ''' The current source file being lexed.
+    ''' </summary>
+    ''' <remarks></remarks>
+    Private mCurrentFile As SourceFile
 
     ''' <summary>
     ''' Current line number of the current position.
@@ -66,16 +73,48 @@ Public Class Lexer
     ''' <remarks></remarks>
     Private mLineTerminatorChars As HashSet(Of Char)
 
+#Region "Constants"
+
+    ''' <summary>
+    ''' Carriage return character constant.
+    ''' </summary>
+    ''' <remarks></remarks>
+    Private Const CarriageReturnChar As Char = ChrW(13)
+
+    ''' <summary>
+    ''' Line feed character constant.
+    ''' </summary>
+    ''' <remarks></remarks>
+    Private Const LineFeedChar As Char = ChrW(10)
+
+    ''' <summary>
+    ''' Unicode line separator character constant.
+    ''' </summary>
+    ''' <remarks></remarks>
+    Private Const LineSeparatorChar As Char = ChrW(&H2028)
+
+    ''' <summary>
+    ''' Unicode paragraph separator character constant.
+    ''' </summary>
+    ''' <remarks></remarks>
+    Private Const ParagraphSeparatorChar As Char = ChrW(&H2029)
+
+#End Region
+
 #Region "Public Methods"
 
     ''' <summary>
     ''' Initialise the lexer with a set of files to process.
     ''' </summary>
-    ''' <param name="files">Set of input files.</param>
+    ''' <param name="inputFile">Input file to lex.</param>
+    ''' <param name="encoding">Encoding to open the input file in.</param>
     ''' <remarks></remarks>
-    Public Sub New(files As IEnumerable(Of SourceFile))
+    Public Sub New(inputFile As SourceFile, encoding As Encoding)
 
-        mFiles = New Queue(Of SourceFile)(files)
+        mLineNumber = 1
+        mColumnNumber = 0
+        mCurrentFile = inputFile
+        mEncoding = encoding
         mKeywords = New HashSet(Of String)(StringComparer.OrdinalIgnoreCase) From
             {"AddHandler", "AddressOf", "Alias", "And", "AndAlso", "As", "Boolean", "ByRef", "Byte", "ByVal", "Call",
              "Case", "Catch", "CBool", "CByte", "CChar", "CDate", "CDbl", "CDec", "Char", "CInt", "Class", "CLng",
@@ -92,8 +131,22 @@ Public Class Lexer
              "Then", "Throw", "To", "True", "Try", "TryCast", "TypeOf", "UInteger", "ULong", "UShort", "Using", "Variant",
              "Wend", "When", "While", "Widening", "With", "WithEvents", "WriteOnly", "Xor"}
         mStartOfCommentChars = New HashSet(Of Char) From {"'"c, ChrW(&H2018), ChrW(&H2019)}
-        NextFile()
+        mLineTerminatorChars = New HashSet(Of Char) From {CarriageReturnChar, LineFeedChar, LineSeparatorChar, ParagraphSeparatorChar}
 
+        If mEncoding IsNot Nothing Then
+            mInputBuffer = New LexerInputBuffer(New StreamReader(mCurrentFile.FileName, mEncoding))
+        Else
+            mInputBuffer = New LexerInputBuffer(New StreamReader(mCurrentFile.FileName))
+        End If
+
+    End Sub
+
+    ''' <summary>
+    ''' Releases the input file handle.
+    ''' </summary>
+    ''' <remarks></remarks>
+    Public Sub Dispose() Implements IDisposable.Dispose
+        mInputBuffer.Dispose()
     End Sub
 
     ''' <summary>
@@ -104,13 +157,183 @@ Public Class Lexer
     Public Function NextToken() As Token
 
         SkipWhitespaceAndComments()
-        Return New Token
 
+        Select Case CurrentCharacter
+
+            Case CarriageReturnChar, LineFeedChar, LineSeparatorChar, ParagraphSeparatorChar
+                SkipNewLineCharacters(mInputBuffer.CurrentCharacter)
+                Return CreateToken(TokenType.TT_END_OF_STATEMENT)
+
+            Case "+"c
+
+                NextCharacter()
+
+                If CurrentCharacter = "=" Then
+                    NextCharacter()
+                    Return CreateToken(TokenType.OP_PLUS_EQ)
+                Else
+                    Return CreateToken(TokenType.OP_PLUS)
+                End If
+
+            Case "-"c
+
+                NextCharacter()
+
+                If CurrentCharacter = "=" Then
+                    NextCharacter()
+                    Return CreateToken(TokenType.OP_SUBTRACT_EQ)
+                Else
+                    Return CreateToken(TokenType.OP_SUBTRACT)
+                End If
+
+            Case "*"c
+
+                NextCharacter()
+
+                If CurrentCharacter = "=" Then
+                    NextCharacter()
+                    Return CreateToken(TokenType.OP_MULTIPLY_EQ)
+                Else
+                    Return CreateToken(TokenType.OP_MULTIPLY)
+                End If
+
+            Case "/"c
+
+                NextCharacter()
+
+                If CurrentCharacter = "=" Then
+                    NextCharacter()
+                    Return CreateToken(TokenType.OP_DIVISION_EQ)
+                Else
+                    Return CreateToken(TokenType.OP_DIVISION)
+                End If
+
+            Case "\"c
+
+                NextCharacter()
+
+                If CurrentCharacter = "=" Then
+                    NextCharacter()
+                    Return CreateToken(TokenType.OP_INT_DIVISION_EQ)
+                Else
+                    Return CreateToken(TokenType.OP_INT_DIVISION)
+                End If
+
+            Case "&"c
+
+                NextCharacter()
+
+                If CurrentCharacter = "=" Then
+                    NextCharacter()
+                    Return CreateToken(TokenType.OP_CONCAT_EQ)
+                Else
+                    Return CreateToken(TokenType.OP_CONCAT)
+                End If
+
+            Case "^"c
+
+                NextCharacter()
+
+                If CurrentCharacter = "=" Then
+                    NextCharacter()
+                    Return CreateToken(TokenType.OP_EXPONENTIAL_EQ)
+                Else
+                    Return CreateToken(TokenType.OP_EXPONENTIAL)
+                End If
+
+            Case "<"c
+
+                'Consume the <
+                NextCharacter()
+
+                'May be one of <, <<, <=, <<=, <>
+                Dim currChar As Char = CurrentCharacter
+
+                If currChar = ">"c Then
+                    NextCharacter()
+                    Return CreateToken(TokenType.OP_NOT_EQUAL)
+                ElseIf currChar = "<" Then
+
+                    'Consume the second < and peek the following character
+                    NextCharacter()
+                    currChar = CurrentCharacter
+
+                    If currChar = "=" Then
+
+                        'Consume the =
+                        NextCharacter()
+                        Return CreateToken(TokenType.OP_LSHIFT_EQ)
+
+                    Else
+                        Return CreateToken(TokenType.OP_LSHIFT)
+                    End If
+
+                ElseIf currChar = "=" Then
+                    NextCharacter()
+                    Return CreateToken(TokenType.OP_LESS_THAN_EQ)
+                Else
+                    Return CreateToken(TokenType.OP_LESS_THAN)
+                End If
+
+            Case ">"c
+
+                'Consume the >
+                NextCharacter()
+
+                If CurrentCharacter = ">" Then
+
+                    'Consume the second >
+                    NextCharacter()
+
+                    If CurrentCharacter = "=" Then
+                        NextCharacter()
+                        Return CreateToken(TokenType.OP_RSHIFT_EQ)
+                    Else
+                        Return CreateToken(TokenType.OP_RSHIFT)
+                    End If
+
+                ElseIf CurrentCharacter = "=" Then
+
+                    NextCharacter()
+                    Return CreateToken(TokenType.OP_GREATER_THAN_EQ)
+
+                Else
+                    Return CreateToken(TokenType.OP_GREATER_THAN)
+                End If
+
+            Case "="c
+                NextCharacter()
+                Return CreateToken(TokenType.OP_EQUALS, Nothing)
+
+        End Select
+
+        Return Nothing
+
+    End Function
+
+    ''' <summary>
+    ''' Indicates if the end of all input files has been reached.
+    ''' </summary>
+    ''' <returns></returns>
+    ''' <remarks></remarks>
+    Public Function EndOfInput() As Boolean
+        Return mInputBuffer.EndOfBuffer
     End Function
 
 #End Region
 
 #Region "Private Methods"
+
+    ''' <summary>
+    ''' Helper method to create a token given its type and value.
+    ''' </summary>
+    ''' <param name="tokType">Type of the token.</param>
+    ''' <param name="value">Value of the token.</param>
+    ''' <returns>A new Token instance initialised with the specified type and value.</returns>
+    ''' <remarks></remarks>
+    Private Function CreateToken(tokType As TokenType, Optional value As Object = Nothing) As Token
+        Return New Token(mCurrentFile, mLineNumber, mColumnNumber, tokType, value)
+    End Function
 
     ''' <summary>
     ''' Skips over and whitespace and comment characters.
@@ -120,9 +343,12 @@ Public Class Lexer
 
         While Not EndOfInput()
 
-            Dim ch = NextCharacter()
+            Dim ch As Char = CurrentCharacter
 
-            If Char.IsWhiteSpace(ch) Then
+            'Don't want to skip newlines, those are treated as their own token
+            If Char.IsWhiteSpace(ch) _
+               AndAlso Not mLineTerminatorChars.Contains(ch) Then
+                NextCharacter()
                 Continue While
             ElseIf mStartOfCommentChars.Contains(ch) Then
 
@@ -137,6 +363,8 @@ Public Class Lexer
                 'Skip over the new line sequence
                 SkipNewLineCharacters(ch)
 
+            Else
+                Return
             End If
 
         End While
@@ -150,16 +378,22 @@ Public Class Lexer
     ''' <remarks></remarks>
     Private Sub SkipNewLineCharacters(ch As Char)
 
-    End Sub
+        If ch = CarriageReturnChar Then
 
-    ''' <summary>
-    ''' Indicates if the end of all input files has been reached.
-    ''' </summary>
-    ''' <returns></returns>
-    ''' <remarks></remarks>
-    Private Function EndOfInput() As Boolean
-        Return False
-    End Function
+            If NextCharacter() = LineFeedChar Then
+                NextCharacter()
+            End If
+
+        ElseIf ch = LineFeedChar _
+               OrElse ch = LineSeparatorChar _
+               OrElse ch = ParagraphSeparatorChar Then
+            NextCharacter()
+        End If
+
+        mLineNumber += 1
+        mColumnNumber = 0
+
+    End Sub
 
     ''' <summary>
     ''' Advances the current position in the current file and returns the character at that position.
@@ -168,40 +402,35 @@ Public Class Lexer
     ''' <remarks></remarks>
     Private Function NextCharacter() As Char
 
-        If Not mCurrPosition.MoveNext() Then
-
-            If Not NextFile() Then
-                Return Chr(0)
-            End If
-
-        End If
-
         mColumnNumber += 1
-        Return mCurrPosition.Current
+        Return mInputBuffer.NextCharacter()
 
     End Function
 
     ''' <summary>
-    ''' Reads the contents of the next file in for lexing.
+    ''' Peeks a single character from the input buffer.
     ''' </summary>
+    ''' <returns></returns>
     ''' <remarks></remarks>
-    Private Function NextFile() As Boolean
-
-        If mFiles.Any() Then
-
-            Using reader As New IO.StreamReader(mFiles.Dequeue().FileName)
-                mCurrPosition = reader.ReadToEnd().GetEnumerator()
-            End Using
-
-            mLineNumber = 1
-            mColumnNumber = 0
-            Return True
-
-        Else
-            Return False
-        End If
-
+    Private Function PeekCharacter() As Char
+        Return mInputBuffer.PeekCharacter()
     End Function
+
+#End Region
+
+#Region "Private Properties"
+
+    ''' <summary>
+    ''' Accessor for the character at the current position in the input file.
+    ''' </summary>
+    ''' <value></value>
+    ''' <returns></returns>
+    ''' <remarks></remarks>
+    Private ReadOnly Property CurrentCharacter() As Char
+        Get
+            Return mInputBuffer.CurrentCharacter
+        End Get
+    End Property
 
 #End Region
 

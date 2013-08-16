@@ -103,6 +103,7 @@
     <Compile Include="Core\SourceFile.vb" />
     <Compile Include="Diagnostics\DiagnosticsManager.vb" />
     <Compile Include="Lexer\Lexer.vb" />
+    <Compile Include="Lexer\LexerInputBuffer.vb" />
     <Compile Include="Lexer\Token.vb" />
     <Compile Include="Main.vb" />
     <Compile Include="My Project\AssemblyInfo.vb" />
