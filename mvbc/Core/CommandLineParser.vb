@@ -441,10 +441,7 @@ Public Class CommandLineParser
                     Try
 
                         Dim codePageID As Integer = Integer.Parse(argValue)
-                        Dim encoding As Encoding = encoding.GetEncoding(codePageID)
-
-                        'Code page ID is valid
-                        settings.CodePage = codePageID
+                        settings.InputFilesEncoding = Encoding.GetEncoding(codePageID)
 
                     Catch ex As Exception
                         mDiagnosticsMngr.CommandLineError(2016, argValue)

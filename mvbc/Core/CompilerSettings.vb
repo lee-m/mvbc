@@ -218,10 +218,10 @@ Public Class CompilerSettings
     Public BugReportFile As String
 
     ''' <summary>
-    ''' The codepage to use when opening source files.
+    ''' The encoding to use when opening input files.
     ''' </summary>
     ''' <remarks></remarks>
-    Public CodePage As Integer?
+    Public InputFilesEncoding As Encoding
 
     ''' <summary>
     ''' Delay-sign the assembly using only the public portion of the strong name key.
