@@ -86,6 +86,7 @@
     <Import Include="System.Collections.Generic" />
     <Import Include="System.Data" />
     <Import Include="System.Diagnostics" />
+    <Import Include="System.Globalization" />
     <Import Include="System.IO" />
     <Import Include="System.Linq" />
     <Import Include="System.Reflection" />
@@ -104,6 +105,7 @@
     <Compile Include="Diagnostics\DiagnosticsManager.vb" />
     <Compile Include="Lexer\Lexer.vb" />
     <Compile Include="Lexer\LexerInputBuffer.vb" />
+    <Compile Include="Lexer\Location.vb" />
     <Compile Include="Lexer\Token.vb" />
     <Compile Include="Main.vb" />
     <Compile Include="My Project\AssemblyInfo.vb" />

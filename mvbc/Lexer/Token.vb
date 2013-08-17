@@ -25,22 +25,10 @@
 Public Class Token
 
     ''' <summary>
-    ''' The input file this token came from.
+    ''' Location of the token.
     ''' </summary>
     ''' <remarks></remarks>
-    Private mFile As SourceFile
-
-    ''' <summary>
-    ''' Line number in the source file this token was from.
-    ''' </summary>
-    ''' <remarks></remarks>
-    Private mLineNumber As Integer
-
-    ''' <summary>
-    ''' Column number the first character of the token appeared on.
-    ''' </summary>
-    ''' <remarks></remarks>
-    Private mColumnNumber As Integer
+    Private mLocation As Location
 
     ''' <summary>
     ''' The type of the token.
@@ -59,22 +47,16 @@ Public Class Token
     ''' <summary>
     ''' Creates a new Token instance initialised with the specified values.
     ''' </summary>
-    ''' <param name="sourceFile">The file this token originated form.</param>
-    ''' <param name="lineNumber">The line number this token was lexed from.</param>
-    ''' <param name="columnNumber">The column number of the first character of this token.</param>
+    ''' <param name="location">Location of the token.</param>
     ''' <param name="tokType">The type of token.</param>
     ''' <param name="value">The actual textual value of the token as lexed from the source file.</param>
     ''' <remarks></remarks>
-    Public Sub New(sourceFile As SourceFile,
-                   lineNumber As Integer,
-                   columnNumber As Integer,
+    Public Sub New(location As Location,
                    tokType As TokenType,
                    value As Object)
-        mFile = sourceFile
-        mLineNumber = lineNumber
-        mColumnNumber = columnNumber
-        mTokenType = tokType
-        mValue = value
+        mLocation = location
+        mTokenType = TokType
+        mValue = Value
     End Sub
 
 #End Region
@@ -82,38 +64,14 @@ Public Class Token
 #Region "Properties"
 
     ''' <summary>
-    ''' Accessor for the source file.
+    ''' Accessor for the location of the token.
     ''' </summary>
     ''' <value></value>
     ''' <returns></returns>
     ''' <remarks></remarks>
-    Public ReadOnly Property SourceFile As SourceFile
+    Public ReadOnly Property Location As Location
         Get
-            Return mFile
-        End Get
-    End Property
-
-    ''' <summary>
-    ''' Accessor for the line number.
-    ''' </summary>
-    ''' <value></value>
-    ''' <returns></returns>
-    ''' <remarks></remarks>
-    Public ReadOnly Property LineNumber As Integer
-        Get
-            Return mLineNumber
-        End Get
-    End Property
-
-    ''' <summary>
-    ''' Accessor for the column number.
-    ''' </summary>
-    ''' <value></value>
-    ''' <returns></returns>
-    ''' <remarks></remarks>
-    Public ReadOnly Property ColumnNumber As Integer
-        Get
-            Return mColumnNumber
+            Return mLocation
         End Get
     End Property
 
@@ -268,7 +226,6 @@ Public Enum TokenType
     KW_RAISEEVENT
     KW_READONLY
     KW_REDIM
-    KW_REM
     KW_REMOVEHANDLER
     KW_RESUME
     KW_RETURN
@@ -342,9 +299,23 @@ Public Enum TokenType
     OP_ISFALSE
     OP_CTYPE
 
+    'Separators
+    SEP_LPAREN
+    SEP_RPAREN
+    SEP_LBRACE
+    SEP_RBRACE
+    SEP_EXPMARK
+    SEP_QMARK
+    SEP_HASH
+    SEP_COMMA
+    SEP_DOT
+    SEP_COLON
+
     'Miscellaneous
+    TT_IDENTIFIER
     TT_END_OF_STATEMENT
     TT_END_OF_FILE
+
 End Enum
 
 #End Region
