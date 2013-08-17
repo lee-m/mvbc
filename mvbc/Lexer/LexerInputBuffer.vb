@@ -22,7 +22,7 @@
 ''' Wrapper around an input stream used by the Lexer.
 ''' </summary>
 ''' <remarks></remarks>
-Public Class LexerInputBuffer
+Public NotInheritable Class LexerInputBuffer
     Implements IDisposable
 
     ''' <summary>
