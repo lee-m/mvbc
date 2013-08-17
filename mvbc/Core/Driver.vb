@@ -72,6 +72,10 @@ Public Class Driver
                 Return 1
             End If
 
+            If Not settings.NoLogo Then
+                ShowLogo()
+            End If
+
             If settings.ShowHelp Then
                 ShowUsage()
                 Return 0
@@ -83,6 +87,11 @@ Public Class Driver
 
             If mDiagnosticsManager.NumberOfErrors > 0 Then
                 Return 1
+            End If
+
+            If Not settings.InputFiles.Any() _
+               AndAlso Not settings.Resources.Any() Then
+                mDiagnosticsManager.CommandLineError(2008)
             End If
 
             Return 0
@@ -99,6 +108,19 @@ Public Class Driver
 #End Region
 
 #Region "Private Methods"
+
+    ''' <summary>
+    ''' Outputs the compiler logo to the console.
+    ''' </summary>
+    ''' <remarks></remarks>
+    Private Sub ShowLogo()
+
+        Dim logo As New StringBuilder
+        logo.AppendLine(String.Format("{0} version {1}", My.Application.Info.Description, My.Application.Info.Version))
+        logo.AppendLine(My.Application.Info.Copyright)
+        Console.WriteLine(logo.ToString())
+
+    End Sub
 
     ''' <summary>
     ''' Outputs details of the various command line options which can be specified.

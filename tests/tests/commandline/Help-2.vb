@@ -1,4 +1,4 @@
-'#compiler-options:-?
+'#compiler-options:/nologo -?
 '#exit-code:0
 '#compiler-message:                  Visual Basic Compiler Options
 '#compiler-message:                                  - OUTPUT FILE -
