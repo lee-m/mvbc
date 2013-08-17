@@ -162,7 +162,7 @@ Public Class DiagnosticsManager
     ''' </summary>
     ''' <param name="ex">Unhandled exception.</param>
     ''' <remarks></remarks>
-    Public Sub InternalCompilerError(ex As Exception)
+    Public Sub EmitInternalCompilerError(ex As Exception)
 
         'We want ICEs to be reported right away
         DisableMessageQueuing()
@@ -178,7 +178,7 @@ Public Class DiagnosticsManager
     ''' <param name="number">Error number.</param>
     ''' <param name="args">Any string format arguments to include in the message.</param>
     ''' <remarks></remarks>
-    Public Sub FatalError(number As Integer, ParamArray args() As String)
+    Public Sub EmitFatalError(number As Integer, ParamArray args() As String)
 
         mNumErrorsIssued += 1
         EmitMessage(String.Format("Fatal error BC{0} : {1}", number.ToString(), GetMessageText(number, args)))
@@ -191,7 +191,7 @@ Public Class DiagnosticsManager
     ''' <param name="number">Number of the error.</param>
     ''' <param name="args">Any string format arguments to include in the message.</param>
     ''' <remarks></remarks>
-    Public Sub CommandLineError(number As Integer, ParamArray args() As String)
+    Public Sub EmitCommandLineError(number As Integer, ParamArray args() As String)
 
         mNumErrorsIssued += 1
         EmitMessage(String.Format("Command line error BC{0} : {1}", number.ToString(), GetMessageText(number, args)))
@@ -204,10 +204,63 @@ Public Class DiagnosticsManager
     ''' <param name="number">Number of the error.</param>
     ''' <param name="args">Any string format arguments to include in the message.</param>
     ''' <remarks></remarks>
-    Public Sub CommandLineWarning(number As Integer, ParamArray args() As String)
+    Public Sub EmitCommandLineWarning(number As Integer, ParamArray args() As String)
 
         mNumWarningsIssued += 1
         EmitMessage(String.Format("Command line warning BC{0} : {1}", number.ToString(), GetMessageText(number, args)))
+
+    End Sub
+
+    ''' <summary>
+    ''' Outputs an error.
+    ''' </summary>
+    ''' <param name="number">Number of the error.</param>
+    ''' <param name="location">Location of the error.</param>
+    ''' <param name="args">Any string format arguments to include in the message.</param>
+    ''' <remarks></remarks>
+    Public Sub EmitError(number As Integer, location As Location, ParamArray args() As String)
+
+        mNumErrorsIssued += 1
+
+        Dim messageText As String = String.Format("{0}({1}:{2}) : error BC{3}: {4}",
+                                                  location.SourceFile.FileName,
+                                                  location.LineNumber,
+                                                  location.ColumnNumber,
+                                                  number,
+                                                  GetMessageText(number, args))
+        EmitMessage(messageText)
+
+    End Sub
+
+    ''' <summary>
+    ''' Outputs a warning.
+    ''' </summary>
+    ''' <param name="number">Number of the warning.</param>
+    ''' <param name="location">Location of the warning.</param>
+    ''' <param name="args">Any string format arguments to include in the message.</param>
+    ''' <remarks>This will take note of the disabled warnings/warnings as errors options so the warning may not be output
+    ''' or may be output as an error dependong on those settings.</remarks>
+    Public Sub EmitWarning(number As Integer, location As Location, ParamArray args() As String)
+
+        If DisabledWarnings.Contains(number) Then
+            Exit Sub
+        End If
+
+        If WarningsAsErrors.Contains(number) Then
+            EmitError(31072, location, GetMessageText(number, args))
+        Else
+
+            mNumWarningsIssued += 1
+
+            Dim messageText As String = String.Format("{0}({1}:{2}) : warning BC{3}: {4}",
+                                                      location.SourceFile.FileName,
+                                                      location.LineNumber,
+                                                      location.ColumnNumber,
+                                                      number,
+                                                      GetMessageText(number, args))
+            EmitMessage(messageText)
+
+        End If
 
     End Sub
 
