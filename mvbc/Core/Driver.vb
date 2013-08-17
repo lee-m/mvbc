@@ -91,14 +91,14 @@ Public Class Driver
 
             If Not settings.InputFiles.Any() _
                AndAlso Not settings.Resources.Any() Then
-                mDiagnosticsManager.CommandLineError(2008)
+                mDiagnosticsManager.EmitCommandLineError(2008)
             End If
 
             Return 0
 
         Catch ex As Exception
 
-            mDiagnosticsManager.InternalCompilerError(ex)
+            mDiagnosticsManager.EmitInternalCompilerError(ex)
             Return 1
 
         End Try

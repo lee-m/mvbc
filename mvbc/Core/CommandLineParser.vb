@@ -166,9 +166,9 @@ Public Class CommandLineParser
                 Dim absPath = New FileInfo(argument.TrimStart("@"c)).FullName
 
                 If Not File.Exists(absPath) Then
-                    mDiagnosticsMngr.FatalError(2011, absPath)
+                    mDiagnosticsMngr.EmitFatalError(2011, absPath)
                 ElseIf processedResponseFiles.Contains(absPath) Then
-                    mDiagnosticsMngr.CommandLineError(2003, absPath)
+                    mDiagnosticsMngr.EmitCommandLineError(2003, absPath)
                 Else
 
                     processedResponseFiles.Add(absPath)
@@ -222,7 +222,7 @@ Public Class CommandLineParser
 
             If settings.InputFiles.Count = 0 _
                AndAlso settings.Resources.Count > 0 Then
-                mDiagnosticsMngr.CommandLineError(2029)
+                mDiagnosticsMngr.EmitCommandLineError(2029)
             ElseIf settings.InputFiles.Count > 0 Then
                 settings.OutputFile = Path.GetFileNameWithoutExtension(settings.InputFiles.First().FileName)
             End If
@@ -252,7 +252,7 @@ Public Class CommandLineParser
 
             If String.IsNullOrEmpty(foundFilePath) Then
 
-                mDiagnosticsMngr.CommandLineError(2017, Path.GetFileName(referencedFile))
+                mDiagnosticsMngr.EmitCommandLineError(2017, Path.GetFileName(referencedFile))
                 Exit Sub
 
             End If
@@ -279,7 +279,7 @@ Public Class CommandLineParser
 
             If String.IsNullOrEmpty(foundFilePath) Then
 
-                mDiagnosticsMngr.CommandLineError(2017, Path.GetFileName(referencedFile))
+                mDiagnosticsMngr.EmitCommandLineError(2017, Path.GetFileName(referencedFile))
                 Exit Sub
 
             Else
@@ -353,14 +353,14 @@ Public Class CommandLineParser
         End Try
 
         If Not validAssembly Then
-            mDiagnosticsMngr.FatalError(2000, String.Format("'{0}' cannot be referenced because it is not an assembly.", assemblyPath))
+            mDiagnosticsMngr.EmitFatalError(2000, String.Format("'{0}' cannot be referenced because it is not an assembly.", assemblyPath))
             Exit Sub
         End If
 
         'Reject attempts to load the same assembly via two different files
         If Not prevLoadedAssemblies.Add(referencedAssemblyName) Then
 
-            mDiagnosticsMngr.FatalError(2000,
+            mDiagnosticsMngr.EmitFatalError(2000,
                                         String.Format("Project already has a reference to assembly {0}. A second reference to '{1}' cannot be added.",
                                                       referencedAssemblyName, assemblyPath))
             Exit Sub
@@ -427,7 +427,7 @@ Public Class CommandLineParser
             Case "bugreport"
 
                 If String.IsNullOrEmpty(argValue) Then
-                    mDiagnosticsMngr.CommandLineError(2006, "bugreport", ":<file>")
+                    mDiagnosticsMngr.EmitCommandLineError(2006, "bugreport", ":<file>")
                 Else
                     settings.BugReportFile = argValue
                 End If
@@ -435,7 +435,7 @@ Public Class CommandLineParser
             Case "codepage"
 
                 If String.IsNullOrEmpty(argValue) Then
-                    mDiagnosticsMngr.CommandLineError(2006, "codepage", ":<number>")
+                    mDiagnosticsMngr.EmitCommandLineError(2006, "codepage", ":<number>")
                 Else
 
                     Try
@@ -444,7 +444,7 @@ Public Class CommandLineParser
                         settings.InputFilesEncoding = Encoding.GetEncoding(codePageID)
 
                     Catch ex As Exception
-                        mDiagnosticsMngr.CommandLineError(2016, argValue)
+                        mDiagnosticsMngr.EmitCommandLineError(2016, argValue)
                     End Try
 
                 End If
@@ -453,14 +453,14 @@ Public Class CommandLineParser
                 settings.DebugInfoGenerationEnabled = True
 
                 If Not String.IsNullOrEmpty(argValue) Then
-                    mDiagnosticsMngr.CommandLineError(2009, "debug")
+                    mDiagnosticsMngr.EmitCommandLineError(2009, "debug")
                 End If
 
             Case "debug-"
                 settings.DebugInfoGenerationEnabled = False
 
                 If Not String.IsNullOrEmpty(argValue) Then
-                    mDiagnosticsMngr.CommandLineError(2009, "debug")
+                    mDiagnosticsMngr.EmitCommandLineError(2009, "debug")
                 End If
 
             Case "debug"
@@ -468,19 +468,19 @@ Public Class CommandLineParser
                 If String.IsNullOrEmpty(argValue) Then
 
                     If colonPosition > 0 Then
-                        mDiagnosticsMngr.CommandLineError(2006, "debug", ":pdbonly|full")
+                        mDiagnosticsMngr.EmitCommandLineError(2006, "debug", ":pdbonly|full")
                     End If
 
                 ElseIf argValue = "pdb" OrElse argValue = "full" Then
                     settings.DebugInfoGenerationEnabled = True
                 Else
-                    mDiagnosticsMngr.CommandLineError(2014, argValue, "debug")
+                    mDiagnosticsMngr.EmitCommandLineError(2014, argValue, "debug")
                 End If
 
             Case "define", "d"
 
                 If String.IsNullOrEmpty(argValue) Then
-                    mDiagnosticsMngr.CommandLineError(2006, argName, ":<symbol_list>")
+                    mDiagnosticsMngr.EmitCommandLineError(2006, argName, ":<symbol_list>")
                 Else
 
                     Dim values As String() = argValue.Split(","c)
@@ -528,7 +528,7 @@ Public Class CommandLineParser
             Case "imports"
 
                 If String.IsNullOrEmpty(argValue) Then
-                    mDiagnosticsMngr.CommandLineError(2006, "imports", ":<import_list>")
+                    mDiagnosticsMngr.EmitCommandLineError(2006, "imports", ":<import_list>")
                 Else
                     settings.GlobalImports.UnionWith(argValue.Split(","c))
                 End If
@@ -536,7 +536,7 @@ Public Class CommandLineParser
             Case "keycontainer"
 
                 If String.IsNullOrEmpty(argValue) Then
-                    mDiagnosticsMngr.CommandLineError(2006, "keycontainer", ":<string>")
+                    mDiagnosticsMngr.EmitCommandLineError(2006, "keycontainer", ":<string>")
                 Else
                     settings.KeyContainer = argValue
                 End If
@@ -544,7 +544,7 @@ Public Class CommandLineParser
             Case "keyfile"
 
                 If String.IsNullOrEmpty(argValue) Then
-                    mDiagnosticsMngr.CommandLineError(2006, "keyfile", ":<file>")
+                    mDiagnosticsMngr.EmitCommandLineError(2006, "keyfile", ":<file>")
                 Else
                     settings.KeyFile = argValue
                 End If
@@ -552,7 +552,7 @@ Public Class CommandLineParser
             Case "libpath"
 
                 If String.IsNullOrEmpty(argValue) Then
-                    mDiagnosticsMngr.CommandLineError(2006, "libpath", ":<path_list>")
+                    mDiagnosticsMngr.EmitCommandLineError(2006, "libpath", ":<path_list>")
                 Else
 
                     Dim paths As String() = argValue.Split(";"c)
@@ -579,7 +579,7 @@ Public Class CommandLineParser
             Case "link"
 
                 If String.IsNullOrEmpty(argValue) Then
-                    mDiagnosticsMngr.CommandLineError(2006, "link", ":<file_list>")
+                    mDiagnosticsMngr.EmitCommandLineError(2006, "link", ":<file_list>")
                 Else
 
                     Dim files() As String = argValue.Split(","c)
@@ -593,7 +593,7 @@ Public Class CommandLineParser
                 Dim embedded As Boolean = argValue.StartsWith("r")
 
                 If String.IsNullOrEmpty(argValue) Then
-                    mDiagnosticsMngr.CommandLineError(2006, argName, ":<resinfo>")
+                    mDiagnosticsMngr.EmitCommandLineError(2006, argName, ":<resinfo>")
                 Else
 
                     Dim components() As String = argValue.Split(","c)
@@ -613,7 +613,7 @@ Public Class CommandLineParser
                             ElseIf components(2) = "private" Then
                                 settings.Resources.Add(New AssemblyResource(components(0), components(1), ResourceAttributes.Private, embedded))
                             Else
-                                mDiagnosticsMngr.CommandLineError(2014, components(2), argName)
+                                mDiagnosticsMngr.EmitCommandLineError(2014, components(2), argName)
                             End If
 
                     End Select
@@ -623,7 +623,7 @@ Public Class CommandLineParser
             Case "main"
 
                 If String.IsNullOrEmpty(argValue) Then
-                    mDiagnosticsMngr.CommandLineError(2006, "main", ":<class>")
+                    mDiagnosticsMngr.EmitCommandLineError(2006, "main", ":<class>")
                 Else
                     settings.MainClassName = argValue
                 End If
@@ -663,7 +663,7 @@ Public Class CommandLineParser
             Case "optioncompare"
 
                 If String.IsNullOrEmpty(argValue) Then
-                    mDiagnosticsMngr.CommandLineError(2006, "optioncompare", ":binary|text")
+                    mDiagnosticsMngr.EmitCommandLineError(2006, "optioncompare", ":binary|text")
                 Else
 
                     If argValue = "binary" Then
@@ -671,7 +671,7 @@ Public Class CommandLineParser
                     ElseIf argValue = "text" Then
                         settings.OptionCompare = OptionCompareValues.Text
                     Else
-                        mDiagnosticsMngr.CommandLineError(2014, argValue, "optioncompare")
+                        mDiagnosticsMngr.EmitCommandLineError(2014, argValue, "optioncompare")
                     End If
 
                 End If
@@ -693,7 +693,7 @@ Public Class CommandLineParser
                 If String.IsNullOrEmpty(argValue) Then
 
                     If colonPosition > 0 Then
-                        mDiagnosticsMngr.CommandLineError(2006, "optionstrict", ":custom")
+                        mDiagnosticsMngr.EmitCommandLineError(2006, "optionstrict", ":custom")
                     Else
                         settings.OptionStrict = OptionStrictViolationValue.IssueError
                     End If
@@ -701,27 +701,27 @@ Public Class CommandLineParser
                 ElseIf argValue = "custom" Then
                     settings.OptionStrict = OptionStrictViolationValue.IssueWarning
                 Else
-                    mDiagnosticsMngr.CommandLineError(2014, argValue, "optionstrict")
+                    mDiagnosticsMngr.EmitCommandLineError(2014, argValue, "optionstrict")
                 End If
 
             Case "optionstrict+"
                 settings.OptionStrict = OptionStrictViolationValue.IssueError
 
                 If Not String.IsNullOrEmpty(argValue) Then
-                    mDiagnosticsMngr.CommandLineError(2009, "optionstrict")
+                    mDiagnosticsMngr.EmitCommandLineError(2009, "optionstrict")
                 End If
 
             Case "optionstrict-"
                 settings.OptionStrict = OptionStrictViolationValue.Ignore
 
                 If Not String.IsNullOrEmpty(argValue) Then
-                    mDiagnosticsMngr.CommandLineError(2009, "optionstrict")
+                    mDiagnosticsMngr.EmitCommandLineError(2009, "optionstrict")
                 End If
 
             Case "out"
 
                 If String.IsNullOrEmpty(argValue) Then
-                    mDiagnosticsMngr.CommandLineError(2006, "out", ":<file>")
+                    mDiagnosticsMngr.EmitCommandLineError(2006, "out", ":<file>")
                 Else
                     settings.OutputFile = argValue
                 End If
@@ -729,7 +729,7 @@ Public Class CommandLineParser
             Case "recurse"
 
                 If String.IsNullOrEmpty(argValue) Then
-                    mDiagnosticsMngr.CommandLineError(2006, "recurse", ":<wildcard>")
+                    mDiagnosticsMngr.EmitCommandLineError(2006, "recurse", ":<wildcard>")
                 Else
 
                     Try
@@ -751,7 +751,7 @@ Public Class CommandLineParser
                         RecurseAddInputFiles(startPath, pattern, settings.InputFiles)
 
                     Catch ex As Exception
-                        mDiagnosticsMngr.CommandLineError(2014, argValue, argName)
+                        mDiagnosticsMngr.EmitCommandLineError(2014, argValue, argName)
                     End Try
 
                 End If
@@ -759,7 +759,7 @@ Public Class CommandLineParser
             Case "reference", "r"
 
                 If String.IsNullOrEmpty(argValue) Then
-                    mDiagnosticsMngr.CommandLineError(2006, argName, ":<file_list>")
+                    mDiagnosticsMngr.EmitCommandLineError(2006, argName, ":<file_list>")
                 Else
 
                     'Any referenced file's validity is checked after all the options are parsed so that we can take into 
@@ -781,7 +781,7 @@ Public Class CommandLineParser
             Case "rootnamespace"
 
                 If String.IsNullOrEmpty(argValue) Then
-                    mDiagnosticsMngr.CommandLineError(2006, "rootnamespace", ":<string>")
+                    mDiagnosticsMngr.EmitCommandLineError(2006, "rootnamespace", ":<string>")
                 Else
                     settings.RootNamespace = argValue
                 End If
@@ -789,7 +789,7 @@ Public Class CommandLineParser
             Case "sdkpath"
 
                 If String.IsNullOrEmpty(argValue) Then
-                    mDiagnosticsMngr.CommandLineError(2006, "sdkpath", ":<path>")
+                    mDiagnosticsMngr.EmitCommandLineError(2006, "sdkpath", ":<path>")
                 Else
                     settings.SDKPath = argValue
                 End If
@@ -797,7 +797,7 @@ Public Class CommandLineParser
             Case "target", "t"
 
                 If String.IsNullOrEmpty(argValue) Then
-                    mDiagnosticsMngr.CommandLineError(2006, "target", ":exe|winexe|library")
+                    mDiagnosticsMngr.EmitCommandLineError(2006, "target", ":exe|winexe|library")
                 Else
 
                     'Check that the value matches one of the allowed target types
@@ -808,7 +808,7 @@ Public Class CommandLineParser
                     ElseIf argValue = "library" Then
                         settings.OutputTarget = OutputTarget.Library
                     Else
-                        mDiagnosticsMngr.CommandLineError(2014, argValue, "target")
+                        mDiagnosticsMngr.EmitCommandLineError(2014, argValue, "target")
                     End If
 
                 End If
@@ -816,7 +816,7 @@ Public Class CommandLineParser
             Case "vbruntime-", "vbruntime+"
 
                 If colonPosition > 0 Then
-                    mDiagnosticsMngr.CommandLineError(2009, "vbruntime")
+                    mDiagnosticsMngr.EmitCommandLineError(2009, "vbruntime")
                 ElseIf argName.EndsWith("+") Then
                     settings.VBRuntime = VBRuntimeValues.WithVBRuntime
                 ElseIf argName.EndsWith("-") Then
@@ -860,9 +860,9 @@ Public Class CommandLineParser
             Case "win32icon"
 
                 If String.IsNullOrEmpty(argValue) Then
-                    mDiagnosticsMngr.CommandLineError(2006, "win32icon", ":<file>")
+                    mDiagnosticsMngr.EmitCommandLineError(2006, "win32icon", ":<file>")
                 ElseIf Not String.IsNullOrEmpty(settings.Win32ResourceFileName) Then
-                    mDiagnosticsMngr.CommandLineError(2023)
+                    mDiagnosticsMngr.EmitCommandLineError(2023)
                 Else
                     settings.Win32IconFileName = argValue
                 End If
@@ -870,7 +870,7 @@ Public Class CommandLineParser
             Case "win32manifest"
 
                 If String.IsNullOrEmpty(argValue) Then
-                    mDiagnosticsMngr.CommandLineError(2006, "win32manifest", ":<file>")
+                    mDiagnosticsMngr.EmitCommandLineError(2006, "win32manifest", ":<file>")
                 Else
                     settings.Win32ManifestFileName = argValue
                 End If
@@ -878,15 +878,15 @@ Public Class CommandLineParser
             Case "win32resource"
 
                 If String.IsNullOrEmpty(argValue) Then
-                    mDiagnosticsMngr.CommandLineError(2006, "win32resource", ":<file>")
+                    mDiagnosticsMngr.EmitCommandLineError(2006, "win32resource", ":<file>")
                 ElseIf Not String.IsNullOrEmpty(settings.Win32IconFileName) Then
-                    mDiagnosticsMngr.CommandLineError(2023)
+                    mDiagnosticsMngr.EmitCommandLineError(2023)
                 Else
                     settings.Win32ResourceFileName = argValue
                 End If
 
             Case Else
-                mDiagnosticsMngr.CommandLineWarning(2007, argName)
+                mDiagnosticsMngr.EmitCommandLineWarning(2007, argName)
 
         End Select
 
@@ -931,9 +931,9 @@ Public Class CommandLineParser
             Dim parsedWarningID As Integer = 0
 
             If Not Integer.TryParse(warningID, parsedWarningID) Then
-                mDiagnosticsMngr.CommandLineError(2014, warningID, optionName)
+                mDiagnosticsMngr.EmitCommandLineError(2014, warningID, optionName)
             ElseIf Not mDiagnosticsMngr.IsValidWarningID(parsedWarningID) Then
-                mDiagnosticsMngr.CommandLineWarning(2026, warningID, optionName)
+                mDiagnosticsMngr.EmitCommandLineWarning(2026, warningID, optionName)
             Else
                 parsedWarnings.Add(parsedWarningID)
             End If
