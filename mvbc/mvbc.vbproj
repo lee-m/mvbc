@@ -74,6 +74,7 @@
     <Reference Include="System" />
     <Reference Include="System.Data" />
     <Reference Include="System.Deployment" />
+    <Reference Include="System.Numerics" />
     <Reference Include="System.Xml" />
     <Reference Include="System.Core" />
     <Reference Include="System.Xml.Linq" />
@@ -89,6 +90,7 @@
     <Import Include="System.Globalization" />
     <Import Include="System.IO" />
     <Import Include="System.Linq" />
+    <Import Include="System.Numerics" />
     <Import Include="System.Reflection" />
     <Import Include="System.Resources" />
     <Import Include="System.Text" />
@@ -113,6 +115,7 @@
       <AutoGen>True</AutoGen>
       <DependentUpon>Application.myapp</DependentUpon>
     </Compile>
+    <Compile Include="Utils\CaseInsensitiveCharComparer.vb" />
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="Diagnostics\Messages.resx" />
