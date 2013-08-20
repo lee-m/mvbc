@@ -311,6 +311,15 @@ Public Enum TokenType
     SEP_DOT
     SEP_COLON
 
+    'Literals
+    LIT_SHORT
+    LIT_USHORT
+    LIT_INTEGER
+    LIT_UINTEGER
+    LIT_LONG
+    LIT_ULONG
+    LIT_DECIMAL
+
     'Miscellaneous
     TT_IDENTIFIER
     TT_END_OF_STATEMENT

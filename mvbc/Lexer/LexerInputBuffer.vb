@@ -38,6 +38,12 @@ Public NotInheritable Class LexerInputBuffer
     Private mCurrentStreamPosition As Integer
 
     ''' <summary>
+    ''' Position of the last byte in the buffer, ignoring the null terminator.
+    ''' </summary>
+    ''' <remarks></remarks>
+    Private mEndBufferPosition As Integer
+
+    ''' <summary>
     ''' Buffered text from the input file.
     ''' </summary>
     ''' <remarks></remarks>
@@ -66,7 +72,7 @@ Public NotInheritable Class LexerInputBuffer
     ''' <summary>
     ''' Create a new input buffer wrapped around the input stream.
     ''' </summary>
-    ''' <param name="input"></param>
+    ''' <param name="input">Input stream being wrapped.</param>
     ''' <remarks></remarks>
     Public Sub New(input As StreamReader)
         mReader = input
@@ -76,15 +82,33 @@ Public NotInheritable Class LexerInputBuffer
     ''' <summary>
     ''' Peeks a character from the buffer without advancing the current position.
     ''' </summary>
-    ''' <returns></returns>
+    ''' <param name="lookAhead">The number of characters to look ahead.</param>
+    ''' <returns>The peeked character.</returns>
     ''' <remarks></remarks>
-    Public Function PeekCharacter() As Char
+    Public Function PeekCharacter(lookAhead As Integer) As Char
 
-        If mBufferPosition = mBuffer.Length - 1 Then
-            Throw New InvalidOperationException("Attempt to peek past end of buffer")
+        'See if we have enough data read to satisfy the read
+        Dim remainderCount As Integer = mEndBufferPosition - mBufferPosition
+
+        If lookAhead > remainderCount Then
+
+            'Shuffle the read bytes in the buffer down and fill the remaining space with the next
+            'chunk of data from the input file. After this shuffling the character at the current position
+            'will be at the front of the buffer so reposition the buffer pointer back to the start.
+            Dim numBytesToCopy = BufferSize - mBufferPosition
+            Dim remainingBufferBytes = BufferSize - numBytesToCopy
+
+            Array.Copy(mBuffer, mBufferPosition, mBuffer, 0, numBytesToCopy)
+            Array.Clear(mBuffer, numBytesToCopy, remainingBufferBytes)
+
+            mBufferPosition = 0
+            mActualBufferSize = mReader.ReadBlock(mBuffer, numBytesToCopy, remainingBufferBytes)
+            mEndBufferPosition = mActualBufferSize - 1
+            mCurrentStreamPosition += mActualBufferSize
+
         End If
 
-        Return mBuffer(mBufferPosition + 1)
+        Return mBuffer(mBufferPosition + lookAhead)
 
     End Function
 
@@ -95,7 +119,7 @@ Public NotInheritable Class LexerInputBuffer
     ''' <remarks></remarks>
     Public Function NextCharacter() As Char
 
-        If mBufferPosition = mActualBufferSize - 1 Then
+        If mBufferPosition = mEndBufferPosition Then
 
             If mReader.EndOfStream Then
                 Return Chr(0)
@@ -117,8 +141,12 @@ Public NotInheritable Class LexerInputBuffer
     ''' </summary>
     ''' <remarks></remarks>
     Public Sub Dispose() Implements IDisposable.Dispose
+
         mReader.Dispose()
+        mReader = Nothing
+
         mBuffer = Nothing
+
     End Sub
 
 #End Region
@@ -131,7 +159,8 @@ Public NotInheritable Class LexerInputBuffer
     ''' <remarks></remarks>
     Private Sub RefreshBuffer()
         Array.Clear(mBuffer, 0, BufferSize)
-        mActualBufferSize = mReader.ReadBlock(mBuffer, mCurrentStreamPosition, BufferSize)
+        mActualBufferSize = mReader.ReadBlock(mBuffer, 0, BufferSize)
+        mEndBufferPosition = mActualBufferSize - 1
         mCurrentStreamPosition += mActualBufferSize
         mBufferPosition = 0
     End Sub
@@ -148,7 +177,7 @@ Public NotInheritable Class LexerInputBuffer
     ''' <remarks></remarks>
     Public ReadOnly Property EndOfBuffer As Boolean
         Get
-            Return mBufferPosition = mActualBufferSize - 1 _
+            Return mBufferPosition = mEndBufferPosition _
                    AndAlso mReader.EndOfStream
         End Get
     End Property
