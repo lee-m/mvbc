@@ -92,6 +92,12 @@ Public NotInheritable Class Lexer
     Private mIdentifierCharUnicodeCategories As HashSet(Of UnicodeCategory)
 
     ''' <summary>
+    ''' Set of characters which can appear in an octal literal.
+    ''' </summary>
+    ''' <remarks></remarks>
+    Private mOctalDigits As HashSet(Of Char)
+
+    ''' <summary>
     ''' Set of characters which are valid in a hex literal
     ''' </summary>
     ''' <remarks></remarks>
@@ -309,9 +315,16 @@ Public NotInheritable Class Lexer
              {"WriteOnly", TokenType.KW_WRITEONLY},
              {"Xor", TokenType.KW_XOR}}
 
+        'Comment/line terminators
         mStartOfCommentChars = New HashSet(Of Char) From {"'"c, ChrW(&H2018), ChrW(&H2019)}
         mLineTerminatorChars = New HashSet(Of Char) From {CarriageReturnChar, LineFeedChar, LineSeparatorChar, ParagraphSeparatorChar}
-        mHexDigits = New HashSet(Of Char)(New CaseInsensitiveCharComparer()) From {"0"c, "1"c, "2"c, "3"c, "4"c, "5"c, "6"c, "7"c, "8"c, "9"c, "A"c, "B"c, "C"c, "D"c, "E"c, "F"c}
+
+        'Hex/octal digits
+        mOctalDigits = New HashSet(Of Char) From {"0"c, "1"c, "2"c, "3"c, "4"c, "5"c, "6"c, "7"c, "8"c, "9"c}
+        mHexDigits = New HashSet(Of Char)(New CaseInsensitiveCharComparer()) From {"A"c, "B"c, "C"c, "D"c, "E"c, "F"c}
+        mHexDigits.UnionWith(mOctalDigits)
+
+        'Identifier character categories
         mAlphaCharUnicodeCategories = New HashSet(Of UnicodeCategory) From {UnicodeCategory.UppercaseLetter,
                                                                             UnicodeCategory.LowercaseLetter,
                                                                             UnicodeCategory.TitlecaseLetter,
@@ -325,6 +338,7 @@ Public NotInheritable Class Lexer
                                                                                  UnicodeCategory.DecimalDigitNumber}
         mIdentifierCharUnicodeCategories.UnionWith(mAlphaCharUnicodeCategories)
 
+        'Create the input buffer
         If mEncoding IsNot Nothing Then
             mInputBuffer = New LexerInputBuffer(New StreamReader(mCurrentFile.FileName, mEncoding))
         Else
@@ -427,25 +441,14 @@ Public NotInheritable Class Lexer
                 ElseIf CurrentCharacter = "H"c _
                        OrElse CurrentCharacter = "h" Then
 
-                    'Consume the H/h
                     NextCharacter()
+                    Return LexHexIntegralLiteral(tokenStartLocation)
 
-                    Dim hexliteral As New StringBuilder
+                ElseIf CurrentCharacter = "O"c _
+                       OrElse CurrentCharacter = "o"c Then
 
-                    While mHexDigits.Contains(CurrentCharacter)
-                        hexliteral.Append(CurrentCharacter)
-                        NextCharacter()
-                    End While
-
-                    'Handle any type character
-                    Dim typeCharacter As IntegralLiteralTypeCharacter = MaybeLexIntegralTypeCharacter()
-
-                    'Parse the literal into a numeric value
-                    Dim literalValue As BigInteger = BigInteger.Parse(hexliteral.ToString(),
-                                                                      NumberStyles.HexNumber,
-                                                                      CultureInfo.InvariantCulture)
-                    Return CreateIntegralLiteralToken(tokenStartLocation, literalValue, typeCharacter)
-
+                    NextCharacter()
+                    Return LexOctalIntegralToken(tokenStartLocation)
                 Else
                     Return CreateToken(tokenStartLocation, TokenType.OP_CONCAT)
                 End If
@@ -567,6 +570,22 @@ Public NotInheritable Class Lexer
                 NextCharacter()
                 Return CreateToken(tokenStartLocation, TokenType.SEP_QMARK)
 
+            Case "0"c To "9"c
+
+                'Lex the digits
+                Dim literal As New StringBuilder
+
+
+                While Char.IsDigit(CurrentCharacter)
+                    literal.Append(CurrentCharacter)
+                    NextCharacter()
+                End While
+
+                Dim literalValue As BigInteger = BigInteger.Parse(literal.ToString(), CultureInfo.InvariantCulture)
+                Dim typeCharacter = MaybeLexIntegralTypeCharacter()
+
+                Return CreateIntegralLiteralToken(tokenStartLocation, literalValue, typeCharacter)
+
             Case Else
 
                 'See if this character can start an identifier
@@ -634,10 +653,13 @@ Public NotInheritable Class Lexer
                 If Char.IsWhiteSpace(peekedSecondChar) Then
 
                     If peekedChar = "S"c Then
+                        SkipCharacters(2)
                         Return IntegralLiteralTypeCharacter.UnsignedShortTypeChar
                     ElseIf peekedChar = "I"c Then
+                        SkipCharacters(2)
                         Return IntegralLiteralTypeCharacter.UnsignedIntTypeChar
                     ElseIf peekedChar = "L" Then
+                        SkipCharacters(2)
                         Return IntegralLiteralTypeCharacter.UnsignedLongTypeChar
                     End If
 
@@ -663,6 +685,13 @@ Public NotInheritable Class Lexer
                     Return IntegralLiteralTypeCharacter.None
                 End If
 
+            Case "@"c, "D"c, "d"c
+
+                If Char.IsWhiteSpace(PeekCharacter()) Then
+                    NextCharacter()
+                    Return IntegralLiteralTypeCharacter.DecimalTypeChar
+                End If
+
         End Select
 
         Return IntegralLiteralTypeCharacter.None
@@ -676,6 +705,61 @@ Public NotInheritable Class Lexer
     ''' <remarks></remarks>
     Private Function EndOfInput() As Boolean
         Return mInputBuffer.EndOfBuffer
+    End Function
+
+    ''' <summary>
+    ''' Lexes an integral literal represented in octal form.
+    ''' </summary>
+    ''' <param name="literalLocation">Start location of the literal.</param>
+    ''' <returns>An integral literal token.</returns>
+    ''' <remarks></remarks>
+    Private Function LexOctalIntegralToken(literalLocation As Location) As Token
+
+        Dim octalLiteral As New StringBuilder
+
+        While mOctalDigits.Contains(CurrentCharacter)
+            octalLiteral.Append(CurrentCharacter)
+            NextCharacter()
+        End While
+
+        Dim typeCharacter As IntegralLiteralTypeCharacter = MaybeLexIntegralTypeCharacter()
+
+        'Convert the octal value to decimal
+        Dim zeroCharASCIIVal As Integer = Asc("0"c)
+        Dim literalValue As New BigInteger(Asc(octalLiteral(0)) - zeroCharASCIIVal)
+
+        For digitPos As Integer = 1 To octalLiteral.Length - 1
+            literalValue = (literalValue * 8) + Asc(octalLiteral(digitPos)) - zeroCharASCIIVal
+        Next
+
+        Return CreateIntegralLiteralToken(literalLocation, literalValue, typeCharacter)
+
+    End Function
+
+    ''' <summary>
+    ''' Lexes a hex integral literal token.
+    ''' </summary>
+    ''' <param name="literalLocation">Start location of the token.</param>
+    ''' <returns>An integral literal token.</returns>
+    ''' <remarks></remarks>
+    Private Function LexHexIntegralLiteral(literalLocation As Location) As Token
+
+        Dim hexliteral As New StringBuilder
+
+        While mHexDigits.Contains(CurrentCharacter)
+            hexliteral.Append(CurrentCharacter)
+            NextCharacter()
+        End While
+
+        'Handle any type character
+        Dim typeCharacter As IntegralLiteralTypeCharacter = MaybeLexIntegralTypeCharacter()
+
+        'Parse the literal into a numeric value
+        Dim literalValue As BigInteger = BigInteger.Parse(hexliteral.ToString(),
+                                                          NumberStyles.HexNumber,
+                                                          CultureInfo.InvariantCulture)
+        Return CreateIntegralLiteralToken(literalLocation, literalValue, typeCharacter)
+
     End Function
 
     ''' <summary>
@@ -848,6 +932,19 @@ Public NotInheritable Class Lexer
         Return mInputBuffer.NextCharacter()
 
     End Function
+
+    ''' <summary>
+    ''' Consumes the required number of characters from the current position.
+    ''' </summary>
+    ''' <param name="count">Number of characters to consume.</param>
+    ''' <remarks></remarks>
+    Private Sub SkipCharacters(count As Integer)
+
+        For idx As Integer = 1 To count
+            NextCharacter()
+        Next
+
+    End Sub
 
     ''' <summary>
     ''' Peeks a single character from the input buffer.
