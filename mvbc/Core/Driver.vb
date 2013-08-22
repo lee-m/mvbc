@@ -94,6 +94,17 @@ Public Class Driver
                 mDiagnosticsManager.EmitCommandLineError(2008)
             End If
 
+            Using lex As New Lexer(settings.InputFiles.First(), settings.InputFilesEncoding, mDiagnosticsManager)
+
+                Dim token As Token = lex.NextToken()
+
+                While token.TokType <> TokenType.TT_END_OF_FILE
+                    'Console.WriteLine("{0} - {1}", token.TokType, token.Value)
+                    token = lex.NextToken()
+                End While
+
+            End Using
+
             Return 0
 
         Catch ex As Exception
