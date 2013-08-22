@@ -348,11 +348,12 @@ Public NotInheritable Class Lexer
     ''' <remarks></remarks>
     Public Function NextToken() As Token
 
+        SkipWhitespaceAndComments(False)
+
         If mInputBuffer.EndOfBuffer Then
             Return CreateToken(Nothing, TokenType.TT_END_OF_FILE)
         End If
 
-        SkipWhitespaceAndComments(False)
         Dim tokenStartLocation As Location = CurrentLocation
 
         Select Case CurrentCharacter
