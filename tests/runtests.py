@@ -70,7 +70,7 @@ class regression_test:
         #Lists of compiler options and expected output and the desired exit code
         self.file_name = fileName;
         self.run_directory = runDirectory;
-        self.compiler_options = None;
+        self.compiler_options = [self.file_name];
         self.compiler_messages = [];
         self.expected_exit_code = 0;
 
@@ -94,7 +94,7 @@ class regression_test:
                         raise Exception("Multiple #compiler-options directives found in file %s" % fileName);
                     else:
                         seenCompilerOptionsDirective = True;
-                        self.compiler_options = line.replace(COMPILER_OPTS_DIRECTIVE, "").strip().split(" ") + [self.file_name];
+                        self.compiler_options += line.replace(COMPILER_OPTS_DIRECTIVE, "").strip().split(" ");
 
                 elif line.startswith(COMPILER_MESSAGE_DIRECTIVE):
 
