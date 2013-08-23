@@ -30,7 +30,6 @@ from os.path import abspath, isfile, join, basename;
 
 #Directory where the test run output goes
 TEST_RUN_FOLDER = "test runs";
-TEST_RUN_OUTPUT_FOLDER = "output";
 
 #Location of any files which are referenced by a test relative to the current test run folder
 TEST_REFERENCES_FOLDER = "..\\..\\references"
@@ -122,7 +121,6 @@ class regression_test:
                     #End of the directives section
                     break;
 
-
             #Add the global options to this test if required
             if not ignoreGlobalOpts:
                 self.compiler_options += GLOBAL_COMPILER_OPTS;
@@ -130,61 +128,44 @@ class regression_test:
     #Executes the test and checks the expected exit-code/expected messages.
     def execute_test(self):
 
-        #Names of the temp files used to hold the stdout/stderr output
-        stdOutRedirectFileName = join(TEST_RUN_OUTPUT_FOLDER, os.path.basename(self.file_name).replace(".vb", ".stdout"));
-        stdErrRedirectFileName = join(TEST_RUN_OUTPUT_FOLDER, os.path.basename(self.file_name).replace(".vb", ".stderr"));
+        #Run the compiler 
+        proc = subprocess.Popen([os.path.abspath(COMPILER_EXE_LOCATION)] + self.compiler_options, stdout = subprocess.PIPE, stderr = subprocess.PIPE);
+        (stdout, stderr) = proc.communicate();
+        exitCode = proc.returncode;
 
-        #Create file handles for holding the stdout/stderr output
-        with open(stdOutRedirectFileName, "w+") as stdOutHandle:
+        #Parse the output into a list of lines of text to check against the expected output
+        receivedMessages = set([o.replace("mvbc : ", "").strip() for o in stdout.split("\n") if len(o) > 0]);
+        receivedMessages = receivedMessages.union([e.replace("mvbc : ", "").strip() for e in stderr.split("\n") if len(e) > 0]);
 
-            with open(stdErrRedirectFileName, "w+") as stdErrHandle:
+        #Check for ICE messages first, one of these may result in different exit codes or a different number of messages
+        #to be output
+        iceMessageFound = False;
 
-                #Run the compiler 
-                proc = subprocess.Popen([os.path.abspath(COMPILER_EXE_LOCATION)] + self.compiler_options, stdout = stdOutHandle, stderr = stdErrHandle);
-                exitCode = proc.wait();
+        for message in receivedMessages:
 
-                stdOutHandle.seek(0, 0);
-                stdErrHandle.seek(0, 0);
+            if "Internal compiler error" in message:
+                iceMessageFound = True;
+                break;
 
-                #Parse the output into a list of lines of text to check against the expected output
-                #(stdout, stderr) = proc.communicate();
-                receivedMessages = set([o.replace("mvbc : ", "").strip() for o in stdOutHandle.read().split("\n") if len(o) > 0]);
+        if iceMessageFound:
+            return test_result(self.file_name, False, "Internal compiler error");
 
-                if os.path.exists(stdErrRedirectFileName):
-                    receivedMessages = receivedMessages.union([e.replace("mvbc : ", "").strip() for e in stdErrHandle.read().split("\n") if len(e) > 0]);
+        #Check the exit code matches what we expect
+        if exitCode != self.expected_exit_code:
+            return test_result(self.file_name, False, "Expected exit code %d, got %d" % (self.expected_exit_code, exitCode));
 
-                stdOutHandle.close();
-                stdErrHandle.close();
-
-                #Check for ICE messages first, one of these may result in different exit codes or a different number of messages
-                #to be output
-                iceMessageFound = False;
-
-                for message in receivedMessages:
-
-                    if "Internal compiler error" in message:
-                        iceMessageFound = True;
-                        break;
-
-                if iceMessageFound:
-                    return test_result(self.file_name, False, "Internal compiler error");
-
-                #Check the exit code matches what we expect
-                if exitCode != self.expected_exit_code:
-                    return test_result(self.file_name, False, "Expected exit code %d, got %d" % (self.expected_exit_code, exitCode));
-
-                #Check we got the expected number of messages
-                if len(receivedMessages) != len(self.compiler_messages):
-                    return test_result(self.file_name, False, "Expected %d messages, got %d" % (len(self.compiler_messages), len(receivedMessages)));
+        #Check we got the expected number of messages
+        if len(receivedMessages) != len(self.compiler_messages):
+            return test_result(self.file_name, False, "Expected %d messages, got %d" % (len(self.compiler_messages), len(receivedMessages)));
         
-                #Check that the messages are the same
-                matches = [message for message in receivedMessages if any(expMessage in message for expMessage in self.compiler_messages)]
+        #Check that the messages are the same
+        matches = [message for message in receivedMessages if any(expMessage in message for expMessage in self.compiler_messages)]
 
-                if len(matches) <> len(self.compiler_messages):
-                    return test_result(self.file_name, False, "Message contents differ");
+        if len(matches) <> len(self.compiler_messages):
+            return test_result(self.file_name, False, "Message contents differ");
          
-                return test_result(self.file_name);
-
+        return test_result(self.file_name);
+             
 #Script entry point
 if __name__ == "__main__":
 
@@ -203,9 +184,6 @@ if __name__ == "__main__":
                                                          currTime.hour, currTime.minute, currTime.second);
     os.makedirs(testRunFolderName);
     os.chdir(testRunFolderName);
-
-    #Create the output folder
-    os.makedirs(TEST_RUN_OUTPUT_FOLDER);
 
     #Copy the compiler executable and response file
     shutil.copyfile(COMPILER_EXE_LOCATION, "mvbc.exe");
