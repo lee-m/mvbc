@@ -118,6 +118,17 @@ Public NotInheritable Class Lexer
         DecimalTypeChar
     End Enum
 
+    ''' <summary>
+    ''' Enumeration of potential type characters which may appear after a floating point literal.
+    ''' </summary>
+    ''' <remarks></remarks>
+    Private Enum FloatingPointLiteralTypeCharacter
+        None
+        SingleTypeChar
+        DoubleTypeChar
+        DecimalTypeChar
+    End Enum
+
 #Region "Constants"
 
     ''' <summary>
@@ -157,7 +168,7 @@ Public NotInheritable Class Lexer
     Public Sub New(inputFile As SourceFile, encoding As Encoding, diagnosticsMngr As DiagnosticsManager)
 
         mLineNumber = 1
-        mColumnNumber = 0
+        mColumnNumber = 1
         mCurrentFile = inputFile
         mEncoding = encoding
         mDiagnosticsMngr = diagnosticsMngr
@@ -345,6 +356,9 @@ Public NotInheritable Class Lexer
             mInputBuffer = New LexerInputBuffer(New StreamReader(mCurrentFile.FileName))
         End If
 
+        'Move to the start of the first token
+        SkipWhitespaceAndComments(True)
+
     End Sub
 
     ''' <summary>
@@ -438,17 +452,16 @@ Public NotInheritable Class Lexer
                 If CurrentCharacter = "=" Then
                     NextCharacter()
                     Return CreateToken(tokenStartLocation, TokenType.OP_CONCAT_EQ)
-                ElseIf CurrentCharacter = "H"c _
-                       OrElse CurrentCharacter = "h" Then
+                ElseIf Char.ToUpperInvariant(CurrentCharacter) = "H"c Then
 
                     NextCharacter()
                     Return LexHexIntegralLiteral(tokenStartLocation)
 
-                ElseIf CurrentCharacter = "O"c _
-                       OrElse CurrentCharacter = "o"c Then
+                ElseIf Char.ToUpperInvariant(CurrentCharacter) = "O"c Then
 
                     NextCharacter()
                     Return LexOctalIntegralToken(tokenStartLocation)
+
                 Else
                     Return CreateToken(tokenStartLocation, TokenType.OP_CONCAT)
                 End If
@@ -550,7 +563,7 @@ Public NotInheritable Class Lexer
 
             Case "#"c
 
-                'TODO: Date literals
+                'TODO: Date literals, directives
                 NextCharacter()
                 Return CreateToken(tokenStartLocation, TokenType.SEP_HASH)
 
@@ -559,8 +572,29 @@ Public NotInheritable Class Lexer
                 Return CreateToken(tokenStartLocation, TokenType.SEP_COMMA)
 
             Case "."c
-                NextCharacter()
-                Return CreateToken(tokenStartLocation, TokenType.SEP_DOT)
+
+                'If followed by a digit this is a number, otherwise it's a token by itself
+                If Char.IsDigit(PeekCharacter()) Then
+
+                    Dim floatingPointLiteral As New StringBuilder
+                    floatingPointLiteral.Append(CurrentCharacter)
+                    NextCharacter()
+
+                    LexNumericDigitsSequence(floatingPointLiteral)
+
+                    'See if we have an exponent
+                    If Char.ToUpperInvariant(CurrentCharacter) = "E"c Then
+                        MaybeLexExponent(floatingPointLiteral, tokenStartLocation)
+                    End If
+
+                    'Handle any type character
+                    Dim typeChar = MaybeLexFloatingPointTypeCharacter()
+                    Return CreateFloatingPointLiteralToken(tokenStartLocation, floatingPointLiteral.ToString(), typeChar)
+
+                Else
+                    NextCharacter()
+                    Return CreateToken(tokenStartLocation, TokenType.SEP_DOT)
+                End If
 
             Case ":"c
                 NextCharacter()
@@ -571,21 +605,8 @@ Public NotInheritable Class Lexer
                 Return CreateToken(tokenStartLocation, TokenType.SEP_QMARK)
 
             Case "0"c To "9"c
-
-                'Lex the digits
-                Dim literal As New StringBuilder
-
-
-                While Char.IsDigit(CurrentCharacter)
-                    literal.Append(CurrentCharacter)
-                    NextCharacter()
-                End While
-
-                Dim literalValue As BigInteger = BigInteger.Parse(literal.ToString(), CultureInfo.InvariantCulture)
-                Dim typeCharacter = MaybeLexIntegralTypeCharacter()
-
-                Return CreateIntegralLiteralToken(tokenStartLocation, literalValue, typeCharacter)
-
+                Return LexIntegralOrFloatingPointNumber(tokenStartLocation)
+                
             Case Else
 
                 'See if this character can start an identifier
@@ -625,6 +646,151 @@ Public NotInheritable Class Lexer
 #End Region
 
 #Region "Private Methods"
+
+    ''' <summary>
+    ''' Lexes and creates an integral or floating-point number.
+    ''' </summary>
+    ''' <param name="tokenLocation">Location of the token.</param>
+    ''' <returns>An integral or floating-point literal token.</returns>
+    ''' <remarks></remarks>
+    Private Function LexIntegralOrFloatingPointNumber(tokenLocation As Location) As Token
+
+        Dim tokenValue As New StringBuilder()
+        LexNumericDigitsSequence(tokenValue)
+
+        If Char.ToUpperInvariant(CurrentCharacter) = "E" Then
+
+            MaybeLexExponent(tokenValue, tokenLocation)
+
+            Dim typeChar = MaybeLexFloatingPointTypeCharacter()
+            Return CreateFloatingPointLiteralToken(tokenLocation, tokenValue.ToString(), typeChar)
+
+        ElseIf CurrentCharacter = "."c _
+               AndAlso Char.IsDigit(PeekCharacter()) Then
+
+            'Consume the . and the digit sequence
+            tokenValue.Append(CurrentCharacter)
+            NextCharacter()
+            LexNumericDigitsSequence(tokenValue)
+
+            'Handle any exponent
+            If Char.ToUpperInvariant(CurrentCharacter) = "E" Then
+                MaybeLexExponent(tokenValue, tokenLocation)
+            End If
+
+            Dim typeChar = MaybeLexFloatingPointTypeCharacter()
+            Return CreateFloatingPointLiteralToken(tokenLocation, tokenValue.ToString(), typeChar)
+
+        Else
+
+            'Plain ol' integer
+            Dim typeCharacter = MaybeLexIntegralTypeCharacter()
+            Dim literalValue As BigInteger = BigInteger.Parse(tokenValue.ToString(), CultureInfo.InvariantCulture)
+
+            Return CreateIntegralLiteralToken(tokenLocation, literalValue, typeCharacter)
+
+        End If
+
+    End Function
+
+    ''' <summary>
+    ''' Lexes a sequence of numeric digits
+    ''' </summary>
+    ''' <param name="literal">The literal value to append each character to.</param>
+    ''' <remarks></remarks>
+    Private Sub LexNumericDigitsSequence(tokenValue As StringBuilder)
+
+        While Char.IsDigit(CurrentCharacter)
+            tokenValue.Append(CurrentCharacter)
+            NextCharacter()
+        End While
+
+    End Sub
+
+    ''' <summary>
+    ''' Handles the lexing and validation of an exponent character sequence for a floating point literal.
+    ''' </summary>
+    ''' <param name="literal">Current literal being lexed the exponent belongs to.</param>
+    ''' <param name="location">Location of the literal the exponent belongs to.</param>
+    ''' <remarks>
+    ''' Exponent  ::=  E  [  Sign  ]  IntLiteral
+    ''' Sign  ::=  +  |  -
+    ''' </remarks>
+    Private Sub MaybeLexExponent(literal As StringBuilder, location As Location)
+
+        'Append the E character
+        Debug.Assert(Char.ToUpperInvariant(CurrentCharacter) = "E")
+
+        literal.Append(CurrentCharacter)
+        NextCharacter()
+
+        'If the sign is missing and is followed by a digit, the sign defaults to +
+        If CurrentCharacter <> "-"c _
+           AndAlso CurrentCharacter <> "+" Then
+
+            If Not Char.IsDigit(PeekCharacter()) Then
+                mDiagnosticsMngr.EmitError(30495, location)
+            End If
+
+            literal.Append("+"c)
+
+        End If
+
+        'Append and consume the sign character
+        literal.Append(CurrentCharacter)
+        NextCharacter()
+
+        'Should be at least one digit following the sign. If not then append a 1 as an error recovery measure
+        If Not Char.IsDigit(CurrentCharacter) Then
+            mDiagnosticsMngr.EmitError(30495, location)
+            literal.Append("1"c)
+        End If
+
+        LexNumericDigitsSequence(literal)
+
+    End Sub
+
+    ''' <summary>
+    ''' Lexes any floating point literal type character at the current position.
+    ''' </summary>
+    ''' <returns>The FP literal type character (if any) at the current position.</returns>
+    ''' <remarks></remarks>
+    Private Function MaybeLexFloatingPointTypeCharacter() As FloatingPointLiteralTypeCharacter
+
+        Select Case Char.ToUpperInvariant(CurrentCharacter)
+
+            Case "!"c, "f"c, "F"c
+
+                If Char.IsWhiteSpace(PeekCharacter()) Then
+                    NextCharacter()
+                    Return FloatingPointLiteralTypeCharacter.SingleTypeChar
+                Else
+                    Return FloatingPointLiteralTypeCharacter.None
+                End If
+
+            Case "#"c, "r"c, "R"c
+
+                If Char.IsWhiteSpace(PeekCharacter()) Then
+                    NextCharacter()
+                    Return FloatingPointLiteralTypeCharacter.DoubleTypeChar
+                Else
+                    Return FloatingPointLiteralTypeCharacter.None
+                End If
+
+            Case "@"c, "d"c, "D"c
+
+                If Char.IsWhiteSpace(PeekCharacter()) Then
+                    NextCharacter()
+                    Return FloatingPointLiteralTypeCharacter.DecimalTypeChar
+                Else
+                    Return FloatingPointLiteralTypeCharacter.None
+                End If
+
+        End Select
+
+        Return FloatingPointLiteralTypeCharacter.None
+
+    End Function
 
     ''' <summary>
     ''' Lexes any integral literal type character at the current position.
@@ -759,6 +925,59 @@ Public NotInheritable Class Lexer
                                                           NumberStyles.HexNumber,
                                                           CultureInfo.InvariantCulture)
         Return CreateIntegralLiteralToken(literalLocation, literalValue, typeCharacter)
+
+    End Function
+
+    ''' <summary>
+    ''' Creates an floating-point literal token, the type of which depends on the value of the literal or 
+    ''' any type specifier applied.
+    ''' </summary>
+    ''' <param name="location"><Location of the token./param>
+    ''' <param name="value">Lexed value of the token.</param>
+    ''' <param name="typeCharacter">Any type specified for the value to dictate the literal type.</param>
+    ''' <returns>A new floating-point literal token.</returns>
+    ''' <remarks></remarks>
+    Private Function CreateFloatingPointLiteralToken(location As Location,
+                                                     value As String,
+                                                     typeCharacter As FloatingPointLiteralTypeCharacter) As Token
+
+        Dim literalValue As Double
+
+        Try
+            literalValue = Double.Parse(value, NumberStyles.Float, CultureInfo.InvariantCulture)
+        Catch ex As OverflowException
+
+            mDiagnosticsMngr.EmitError(30036, location)
+            literalValue = Double.MaxValue
+
+        End Try
+
+        '2.4.3 - By default, a floating-point literal is of type Double. If the Single, Double, or Decimal type 
+        'character is specified, the literal is of that type. If a floating-point literal's type is of insufficient 
+        'size to hold the floating-point literal, a compile-time error results.
+        Dim literalTokenType As TokenType = TokenType.LIT_DOUBLE
+        Dim maxTokenValue As Double = Double.MaxValue
+
+        If typeCharacter = FloatingPointLiteralTypeCharacter.SingleTypeChar Then
+
+            literalTokenType = TokenType.LIT_SINGLE
+            maxTokenValue = Single.MaxValue
+
+        ElseIf typeCharacter = FloatingPointLiteralTypeCharacter.DecimalTypeChar Then
+
+            literalTokenType = TokenType.LIT_DECIMAL
+            maxTokenValue = Decimal.MaxValue
+
+        ElseIf typeCharacter <> FloatingPointLiteralTypeCharacter.None Then
+            Debug.Assert(typeCharacter = FloatingPointLiteralTypeCharacter.DoubleTypeChar)
+        End If
+
+        If literalValue > maxTokenValue Then
+            mDiagnosticsMngr.EmitError(30036, location)
+            literalValue = maxTokenValue
+        End If
+
+        Return New Token(location, literalTokenType, literalValue)
 
     End Function
 
@@ -917,7 +1136,7 @@ Public NotInheritable Class Lexer
         End If
 
         mLineNumber += 1
-        mColumnNumber = 0
+        mColumnNumber = 1
 
     End Sub
 

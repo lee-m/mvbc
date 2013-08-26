@@ -319,6 +319,8 @@ Public Enum TokenType
     LIT_LONG
     LIT_ULONG
     LIT_DECIMAL
+    LIT_SINGLE
+    LIT_DOUBLE
 
     'Miscellaneous
     TT_IDENTIFIER

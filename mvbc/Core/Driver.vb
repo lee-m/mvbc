@@ -99,13 +99,17 @@ Public Class Driver
                 Dim token As Token = lex.NextToken()
 
                 While token.TokType <> TokenType.TT_END_OF_FILE
-                    'Console.WriteLine("{0} - {1}", token.TokType, token.Value)
+                    'Console.WriteLine("{0} - {1} @ {2}:{3}", token.TokType, token.Value, token.Location.LineNumber, token.Location.ColumnNumber)
                     token = lex.NextToken()
                 End While
 
             End Using
 
-            Return 0
+            If mDiagnosticsManager.NumberOfErrors > 0 Then
+                Return 1
+            Else
+                Return 0
+            End If
 
         Catch ex As Exception
 

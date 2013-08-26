@@ -1,21 +1,22 @@
-'#compiler-message:30036-1.vb(25:36) : error BC30036: Overflow
-'#compiler-message:30036-1.vb(26:36) : error BC30036: Overflow
-'#compiler-message:30036-1.vb(29:36) : error BC30036: Overflow
-'#compiler-message:30036-1.vb(30:36) : error BC30036: Overflow
-'#compiler-message:30036-1.vb(33:34) : error BC30036: Overflow
-'#compiler-message:30036-1.vb(34:34) : error BC30036: Overflow
-'#compiler-message:30036-1.vb(35:34) : error BC30036: Overflow
-'#compiler-message:30036-1.vb(38:35) : error BC30036: Overflow
-'#compiler-message:30036-1.vb(39:35) : error BC30036: Overflow
-'#compiler-message:30036-1.vb(42:35) : error BC30036: Overflow
-'#compiler-message:30036-1.vb(43:35) : error BC30036: Overflow
-'#compiler-message:30036-1.vb(44:35) : error BC30036: Overflow
-'#compiler-message:30036-1.vb(45:35) : error BC30036: Overflow
-'#compiler-message:30036-1.vb(48:43) : error BC30036: Overflow
-'#compiler-message:30036-1.vb(49:43) : error BC30036: Overflow
-'#compiler-message:30036-1.vb(50:43) : error BC30036: Overflow
-'#compiler-message:30036-1.vb(53:31) : error BC30036: Overflow
-'#compiler-message:30036-1.vb(55:31) : error BC30036: Overflow
+'#compiler-message:30036-1.vb(26:37) : error BC30036: Overflow
+'#compiler-message:30036-1.vb(27:37) : error BC30036: Overflow
+'#compiler-message:30036-1.vb(30:37) : error BC30036: Overflow
+'#compiler-message:30036-1.vb(31:37) : error BC30036: Overflow
+'#compiler-message:30036-1.vb(34:35) : error BC30036: Overflow
+'#compiler-message:30036-1.vb(35:35) : error BC30036: Overflow
+'#compiler-message:30036-1.vb(36:35) : error BC30036: Overflow
+'#compiler-message:30036-1.vb(39:36) : error BC30036: Overflow
+'#compiler-message:30036-1.vb(40:36) : error BC30036: Overflow
+'#compiler-message:30036-1.vb(43:36) : error BC30036: Overflow
+'#compiler-message:30036-1.vb(44:36) : error BC30036: Overflow
+'#compiler-message:30036-1.vb(45:36) : error BC30036: Overflow
+'#compiler-message:30036-1.vb(46:36) : error BC30036: Overflow
+'#compiler-message:30036-1.vb(49:44) : error BC30036: Overflow
+'#compiler-message:30036-1.vb(50:44) : error BC30036: Overflow
+'#compiler-message:30036-1.vb(51:44) : error BC30036: Overflow
+'#compiler-message:30036-1.vb(54:32) : error BC30036: Overflow
+'#compiler-message:30036-1.vb(56:32) : error BC30036: Overflow
+'#exit-code:1
 
 Module Foo
 
