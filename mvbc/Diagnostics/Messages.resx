@@ -159,6 +159,9 @@
   <data name="30036" xml:space="preserve">
     <value>Overflow</value>
   </data>
+  <data name="30495" xml:space="preserve">
+    <value>Exponent is not valid.</value>
+  </data>
   <data name="31072" xml:space="preserve">
     <value>Warning treated as error : {0}</value>
   </data>
