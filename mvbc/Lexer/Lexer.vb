@@ -606,13 +606,38 @@ Public NotInheritable Class Lexer
 
             Case "0"c To "9"c
                 Return LexIntegralOrFloatingPointNumber(tokenStartLocation)
-                
+
+            Case "["c
+
+                NextCharacter()
+
+                If Not IsValidAlphaCharacter(CurrentCharacter) Then
+                    mDiagnosticsMngr.EmitError(30203, CurrentLocation)
+                Else
+
+                    Dim escapedIdentifier As New StringBuilder()
+
+                    While IsValidAlphaCharacter(CurrentCharacter)
+                        escapedIdentifier.Append(CurrentCharacter)
+                        NextCharacter()
+                    End While
+
+                    If CurrentCharacter <> "]"c Then
+                        mDiagnosticsMngr.EmitError(30034, CurrentLocation)
+                    Else
+                        NextCharacter()
+                    End If
+
+                    Return CreateToken(tokenStartLocation, TokenType.TT_IDENTIFIER, escapedIdentifier.ToString())
+
+                End If
+
             Case Else
 
                 'See if this character can start an identifier
                 If IsValidAlphaCharacter(CurrentCharacter) _
-                   OrElse (CurrentCharacter = "_" _
-                           AndAlso IsValidAlphaCharacter(PeekCharacter())) Then
+                    OrElse (CurrentCharacter = "_" _
+                            AndAlso IsValidAlphaCharacter(PeekCharacter())) Then
 
                     Dim identifier As New StringBuilder()
                     identifier.Append(CurrentCharacter)
@@ -635,7 +660,15 @@ Public NotInheritable Class Lexer
                         Return CreateToken(tokenStartLocation, TokenType.TT_IDENTIFIER, identifier.ToString())
                     End If
 
+                Else
+
+                    mDiagnosticsMngr.EmitError(30037, CurrentLocation)
+
+                    NextCharacter()
+                    Return NextToken()
+
                 End If
+
 
         End Select
 
