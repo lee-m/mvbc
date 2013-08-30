@@ -80,6 +80,12 @@ Public NotInheritable Class Lexer
     Private mLineTerminatorChars As HashSet(Of Char)
 
     ''' <summary>
+    ''' List of valid double-quote characters.
+    ''' </summary>
+    ''' <remarks></remarks>
+    Private mDoubleQuoteChars As HashSet(Of Char)
+
+    ''' <summary>
     ''' Set of Unicode character categories which are valid for an alpha character.
     ''' </summary>
     ''' <remarks></remarks>
@@ -326,9 +332,10 @@ Public NotInheritable Class Lexer
              {"WriteOnly", TokenType.KW_WRITEONLY},
              {"Xor", TokenType.KW_XOR}}
 
-        'Comment/line terminators
+        'Comment/line/quote terminators
         mStartOfCommentChars = New HashSet(Of Char) From {"'"c, ChrW(&H2018), ChrW(&H2019)}
         mLineTerminatorChars = New HashSet(Of Char) From {CarriageReturnChar, LineFeedChar, LineSeparatorChar, ParagraphSeparatorChar}
+        mDoubleQuoteChars = New HashSet(Of Char) From {""""c, ChrW(&H201C), ChrW(&H201D)}
 
         'Hex/octal digits
         mOctalDigits = New HashSet(Of Char) From {"0"c, "1"c, "2"c, "3"c, "4"c, "5"c, "6"c, "7"c, "8"c, "9"c}
@@ -606,6 +613,41 @@ Public NotInheritable Class Lexer
 
             Case "0"c To "9"c
                 Return LexIntegralOrFloatingPointNumber(tokenStartLocation)
+
+            Case """"c, ChrW(&H201C), ChrW(&H201D)
+
+                'Advance past the opening quote
+                NextCharacter()
+
+                Dim literal As New StringBuilder
+
+                While True
+
+                    'A double quote immediately followed by a double quote is an escaped double quote
+                    If mDoubleQuoteChars.Contains(CurrentCharacter) Then
+
+                        If mDoubleQuoteChars.Contains(PeekCharacter()) Then
+                            literal.Append(CurrentCharacter)
+                            SkipCharacters(2)
+                        Else
+                            NextCharacter()
+                            Exit While
+                        End If
+
+                    ElseIf mLineTerminatorChars.Contains(CurrentCharacter) Then
+
+                        'Unterminated string literal
+                        mDiagnosticsMngr.EmitError(30648, tokenStartLocation)
+                        Exit While
+
+                    Else
+                        literal.Append(CurrentCharacter)
+                        NextCharacter()
+                    End If
+
+                End While
+
+                Return CreateToken(tokenStartLocation, TokenType.LIT_STRING, literal.ToString())
 
             Case "["c
 
