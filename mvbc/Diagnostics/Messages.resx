@@ -105,14 +105,14 @@
       </xsd:complexType>
     </xsd:element>
   </xsd:schema>
-  <resheader name="reader">
-    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
-  </resheader>
   <resheader name="resmimetype">
     <value>text/microsoft-resx</value>
   </resheader>
   <resheader name="version">
     <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
   <resheader name="writer">
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
@@ -156,8 +156,17 @@
   <data name="2029" xml:space="preserve">
     <value>cannot infer an output file name from resource only input files; provide the '/out' option</value>
   </data>
+  <data name="30034" xml:space="preserve">
+    <value>Bracketed identifier is missing closing ']'.</value>
+  </data>
   <data name="30036" xml:space="preserve">
     <value>Overflow</value>
+  </data>
+  <data name="30037" xml:space="preserve">
+    <value>Character is not valid.</value>
+  </data>
+  <data name="30203" xml:space="preserve">
+    <value>Identifier expected.</value>
   </data>
   <data name="30495" xml:space="preserve">
     <value>Exponent is not valid.</value>
