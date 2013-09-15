@@ -322,6 +322,7 @@ Public Enum TokenType
     LIT_SINGLE
     LIT_DOUBLE
     LIT_STRING
+    LIT_CHAR
 
     'Miscellaneous
     TT_IDENTIFIER

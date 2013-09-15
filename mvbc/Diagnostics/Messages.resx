@@ -156,6 +156,9 @@
   <data name="2029" xml:space="preserve">
     <value>cannot infer an output file name from resource only input files; provide the '/out' option</value>
   </data>
+  <data name="30004" xml:space="preserve">
+    <value>Character constant must contain exactly one character.</value>
+  </data>
   <data name="30034" xml:space="preserve">
     <value>Bracketed identifier is missing closing ']'.</value>
   </data>
