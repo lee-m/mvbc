@@ -647,6 +647,20 @@ Public NotInheritable Class Lexer
 
                 End While
 
+                'See if there's a trailing 'C' character, indicating a character literal
+                If Char.ToUpperInvariant(CurrentCharacter) = "C" Then
+
+                    NextCharacter()
+
+                    If literal.Length > 1 Then
+                        mDiagnosticsMngr.EmitError(30004, CurrentLocation)
+                        literal = literal.Remove(1, literal.Length - 1)
+                    End If
+
+                    Return CreateToken(tokenStartLocation, TokenType.LIT_CHAR, literal.ToString())
+
+                End If
+
                 Return CreateToken(tokenStartLocation, TokenType.LIT_STRING, literal.ToString())
 
             Case "["c
