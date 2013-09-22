@@ -110,6 +110,15 @@ Public NotInheritable Class Lexer
     Private mHexDigits As HashSet(Of Char)
 
     ''' <summary>
+    ''' Possible values to pass to <see cref="SkipWhitespaceAndComments">SkipWhitespaceAndComments</see>
+    ''' </summary>
+    ''' <remarks></remarks>
+    Private Enum SkipWhitespaceOptions
+        SkipNewLines
+        DontSkipNewLines
+    End Enum
+
+    ''' <summary>
     ''' Enumeration of potential type characters which may appear after an integral literal
     ''' </summary>
     ''' <remarks></remarks>
@@ -364,7 +373,7 @@ Public NotInheritable Class Lexer
         End If
 
         'Move to the start of the first token
-        SkipWhitespaceAndComments(True)
+        SkipWhitespaceAndComments(SkipWhitespaceOptions.SkipNewLines)
 
     End Sub
 
@@ -383,7 +392,7 @@ Public NotInheritable Class Lexer
     ''' <remarks></remarks>
     Public Function NextToken() As Token
 
-        SkipWhitespaceAndComments(False)
+        SkipWhitespaceAndComments(SkipWhitespaceOptions.DontSkipNewLines)
 
         If mInputBuffer.EndOfBuffer Then
             Return CreateToken(Nothing, TokenType.TT_END_OF_FILE)
@@ -394,7 +403,7 @@ Public NotInheritable Class Lexer
         Select Case CurrentCharacter
 
             Case CarriageReturnChar, LineFeedChar, LineSeparatorChar, ParagraphSeparatorChar
-                SkipWhitespaceAndComments(True)
+                SkipWhitespaceAndComments(SkipWhitespaceOptions.SkipNewLines)
                 Return CreateToken(tokenStartLocation, TokenType.TT_END_OF_STATEMENT)
 
             Case "+"c
@@ -1161,8 +1170,9 @@ Public NotInheritable Class Lexer
     ''' <summary>
     ''' Skips over and whitespace and comment characters.
     ''' </summary>
+    ''' <param name="opt">Controls whether new lines should be skipped or not.</param>
     ''' <remarks></remarks>
-    Private Sub SkipWhitespaceAndComments(skipNewLines As Boolean)
+    Private Sub SkipWhitespaceAndComments(opt As SkipWhitespaceOptions)
 
         While Not EndOfInput()
 
@@ -1172,7 +1182,7 @@ Public NotInheritable Class Lexer
 
                 If mLineTerminatorChars.Contains(ch) Then
 
-                    If Not skipNewLines Then
+                    If opt = SkipWhitespaceOptions.DontSkipNewLines Then
                         Exit Sub
                     End If
 
