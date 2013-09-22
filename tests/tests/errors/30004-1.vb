@@ -1,5 +1,5 @@
-'#compiler-message:30004-1.vb(9:22) : error BC30004: Character constant must contain exactly one character.
-'#compiler-message:30004-1.vb(10:22) : error BC30004: Character constant must contain exactly one character.
+'#compiler-message:30004-1.vb(9:23) : error BC30004: Character constant must contain exactly one character.
+'#compiler-message:30004-1.vb(10:23) : error BC30004: Character constant must contain exactly one character.
 '#exit-code:1
 
 Module Test
